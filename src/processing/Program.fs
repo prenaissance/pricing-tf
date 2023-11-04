@@ -2,40 +2,7 @@
 open Websocket.Client
 open System.Threading
 open System.Text.Json.Nodes
-
-type Tf2Currency = { metal: int; keys: int }
-
-type Tf2NaturalCurrency =
-    { raw: float
-      short: string
-      long: string }
-
-type ListingIntent =
-    | Buy
-    | Sell
-
-    static member parse(s: string) =
-        match s with
-        | "buy" -> Buy
-        | "sell" -> Sell
-        | _ -> failwith "Invalid listing intent"
-
-type PricingEvent =
-    { id: int
-      steamid: int
-      appid: int
-      currencies: Tf2Currency
-      value: Tf2NaturalCurrency
-      tradeOffersPreferred: bool
-      details: string
-      listedAt: int
-      bumpedAt: int
-      intent: string // TODO: ListingIntent
-      count: int
-      status: string
-      source: string
-
-    }
+open PricingTf.Processing
 
 let wsUrl = "wss://ws.backpack.tf/events"
 

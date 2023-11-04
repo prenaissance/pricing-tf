@@ -1,0 +1,27 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.0.31903.59
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "src", "src", "{508C6ADD-52A9-451B-BFC9-7E2C3606C413}"
+EndProject
+Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "PricingTf.Processing", "src\processing\PricingTf.Processing.fsproj", "{BCAC6A75-39D3-4DA4-8001-1FED586BE0D2}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{BCAC6A75-39D3-4DA4-8001-1FED586BE0D2}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{BCAC6A75-39D3-4DA4-8001-1FED586BE0D2}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{BCAC6A75-39D3-4DA4-8001-1FED586BE0D2}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{BCAC6A75-39D3-4DA4-8001-1FED586BE0D2}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(NestedProjects) = preSolution
+		{BCAC6A75-39D3-4DA4-8001-1FED586BE0D2} = {508C6ADD-52A9-451B-BFC9-7E2C3606C413}
+	EndGlobalSection
+EndGlobal
