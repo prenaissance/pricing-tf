@@ -1,10 +1,14 @@
 ﻿open System
-open Websocket.Client
-open System.Threading
-open System.Text.Json.Nodes
-open System.Text.Json
-open PricingTf.Processing.Events
 open System.IO
+open System.Threading
+open System.Text.Json
+open System.Text.Json.Nodes
+
+open Websocket.Client
+open Microsoft.Extensions.Configuration
+open Microsoft.Extensions.Configuration.EnvironmentVariables
+
+open PricingTf.Processing.Events
 
 let getExamplePricingEvent () =
     { id = Convert.FromHexString "654780b6b179b639d30bf17a"
@@ -95,6 +99,22 @@ let getExamplePricingEvent () =
               flagImpersonated = false
               bans = [] } } }
 
+[<CLIMutable>]
+type Config = { MongoDbUrl: string }
+
+let configuration =
+    let builder = ConfigurationBuilder()
+
+    builder
+        .SetBasePath(Directory.GetCurrentDirectory())
+        .AddJsonFile("appsettings.json", optional = true, reloadOnChange = true)
+        .AddEnvironmentVariables()
+    |> ignore
+
+    builder.Build().Get<Config>()
+
+
+[<Literal>]
 let wsUrl = "wss://ws.backpack.tf/events"
 
 type ParsedPair = PricingEvent * JsonNode
