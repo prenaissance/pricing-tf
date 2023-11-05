@@ -4,7 +4,8 @@
     <TargetFramework>net8.0</TargetFramework>
   </PropertyGroup>
   <ItemGroup>
-    <Compile Include="Events.fs" />
+    <Compile Include="Events/BpTfEvents.fs" />
+    <Compile Include="Events/JsonConverters.fs" />
     <Compile Include="Program.fs" />
   </ItemGroup>
   <ItemGroup>

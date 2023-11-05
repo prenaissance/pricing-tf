@@ -1,8 +1,8 @@
-namespace PricingTf.Processing
+namespace PricingTf.Processing.Events
 
 open System.Text.Json.Serialization
 
-type Tf2Currency = { metal: int; keys: int }
+type Tf2Currency = { metal: float; keys: float }
 
 type Tf2NaturalCurrency =
     { raw: float
@@ -12,12 +12,6 @@ type Tf2NaturalCurrency =
 type ListingIntent =
     | Buy
     | Sell
-
-    static member parse(s: string) =
-        match s with
-        | "buy" -> Buy
-        | "sell" -> Sell
-        | _ -> failwith "Invalid listing intent"
 
 type SteamPrice =
     { currency: string
@@ -68,7 +62,7 @@ type Killstreaker = { id: int; name: string }
 type UserAgent = { client: string; lastPulse: int }
 
 type User =
-    { id: int
+    { id: string
       name: string
       avatar: string
       avatarFull: string
@@ -85,6 +79,7 @@ type User =
       flagImpersonated: bool
       bans: int list }
 
+[<CLIMutable>]
 type ItemListing =
     { appid: int
       baseName: string
@@ -108,9 +103,9 @@ type ItemListing =
       sheen: Sheen option
       killstreaker: Killstreaker option }
 
-type PricingEvent =
-    { id: int
-      steamid: int
+type PricingEventPayload =
+    { id: string
+      steamid: string
       appid: int
       currencies: Tf2Currency
       value: Tf2NaturalCurrency
@@ -119,10 +114,25 @@ type PricingEvent =
       details: string
       listedAt: int
       bumpedAt: int
-      intent: string // TODO: ListingIntent
+      intent: ListingIntent
       count: int
       status: string
       source: string
       item: ItemListing
       userAgent: UserAgent
       user: User }
+
+type ListingType =
+    | ListingUpdate
+    | ListingDelete
+
+    static member parse =
+        function
+        | "listing-update" -> ListingUpdate
+        | "listing-delete" -> ListingDelete
+        | _ -> failwith "Invalid listing type"
+
+type PricingEvent =
+    { id: byte[]
+      event: ListingType
+      payload: PricingEventPayload }
