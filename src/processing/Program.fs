@@ -4,6 +4,7 @@ open System.Threading
 open System.Text.Json.Nodes
 open System.Text.Json
 open PricingTf.Processing.Events
+open System.IO
 
 let getExamplePricingEvent () =
     { id = Convert.FromHexString "654780b6b179b639d30bf17a"
@@ -38,26 +39,29 @@ let getExamplePricingEvent () =
               originalId = "5f7b1b4c4dd7f6c3a8a7b2a0"
               price =
                 { steam =
-                    { currency = "metal"
-                      short = "0.00"
-                      long = "0.00 ref"
-                      raw = 0.0
-                      value = 0.0 }
+                    Some
+                        { currency = "metal"
+                          short = "0.00"
+                          long = "0.00 ref"
+                          raw = 0.0
+                          value = 0 }
                   community =
-                    { value = 0.0
-                      valueHigh = 0.0
-                      currency = "metal"
-                      raw = 0.0
-                      short = "0.00"
-                      long = "0.00 ref"
-                      usd = 0.0
-                      updatedAt = 0
-                      difference = 0.0 }
+                    Some
+                        { value = 0.0
+                          valueHigh = 0.0
+                          currency = "metal"
+                          raw = 0.0
+                          short = "0.00"
+                          long = "0.00 ref"
+                          usd = 0.0
+                          updatedAt = 0
+                          difference = 0.0 }
                   suggested =
-                    { raw = 0.0
-                      short = "0.00"
-                      long = "0.00 ref"
-                      usd = 0.0 } }
+                    Some
+                        { raw = 0.0
+                          short = "0.00"
+                          long = "0.00 ref"
+                          usd = 0.0 } }
               quality =
                 { id = 6
                   name = "Unique"
@@ -115,7 +119,6 @@ let getWsEventStream (url: string) =
             Some parsed
         with e ->
             printfn "Failed to parse event: %A" e
-            printfn "Event: %A" (JsonValue.Parse x)
             None)
     |> Observable.filter (fun x -> x.IsSome)
     |> Observable.map (fun x -> x.Value)

@@ -54,9 +54,30 @@ module BpTfEventsConverters =
 
         override _.Write(writer, value, _) = writer.WriteBooleanValue(value)
 
+    type OptionConverter<'T>() =
+        inherit JsonConverter<'T option>()
+
+        override _.Read(reader, _, _) =
+            match reader.TokenType with
+            | JsonTokenType.Null
+            | JsonTokenType.None -> None
+            | _ ->
+                let value = JsonSerializer.Deserialize<'T>(&reader)
+                Some value
+
+        override _.Write(writer, value, _) =
+            match value with
+            | Some value -> JsonSerializer.Serialize(writer, value)
+            | None -> writer.WriteNullValue()
+
     let jsonOptions =
         let options = JsonSerializerOptions()
         options.Converters.Add(ListingIntentConverter())
         options.Converters.Add(ListingTypeConverter())
         options.Converters.Add(BooleanDefaultFalseConverter())
+        options.Converters.Add(OptionConverter<SteamPrice>())
+        options.Converters.Add(OptionConverter<CommunityPrice>())
+        options.Converters.Add(OptionConverter<SuggestedPrice>())
+        options.Converters.Add(OptionConverter<Origin>())
+        options.WriteIndented <- true
         options

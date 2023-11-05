@@ -38,9 +38,9 @@ type SuggestedPrice =
       usd: float }
 
 type Price =
-    { steam: SteamPrice
-      community: CommunityPrice
-      suggested: SuggestedPrice }
+    { steam: SteamPrice option
+      community: CommunityPrice option
+      suggested: SuggestedPrice option }
 
 type Quality =
     { id: int; name: string; color: string }
@@ -79,7 +79,6 @@ type User =
       flagImpersonated: bool
       bans: int list }
 
-[<CLIMutable>]
 type ItemListing =
     { appid: int
       baseName: string
