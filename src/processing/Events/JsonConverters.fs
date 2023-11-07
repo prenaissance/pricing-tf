@@ -4,6 +4,8 @@ open System.Text.Json.Serialization
 open System.Text.Json
 
 module BpTfEventsConverters =
+    open PricingTf.Processing.Models
+
     type ListingIntentConverter() =
         inherit JsonConverter<ListingIntent>()
 

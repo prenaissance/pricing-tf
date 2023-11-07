@@ -2,11 +2,11 @@
 open System.IO
 open System.Threading
 open System.Text.Json
-open System.Text.Json.Nodes
 
 open Websocket.Client
 open Microsoft.Extensions.Configuration
 
+open PricingTf.Processing.Models
 open PricingTf.Processing.Events
 open PricingTf.Processing.Services
 
@@ -17,7 +17,9 @@ let getExamplePricingEvent () =
         { id = "440_76561199115825381_5f2206613542100070a8b2421512c640"
           steamid = "76561199115825381"
           appid = 440
-          currencies = { metal = 51.22; keys = 27 }
+          currencies =
+            { metal = 51.22<metal>
+              keys = 27.0<keys> }
           value =
             { raw = 1518.13
               short = "27.94 keys"
@@ -125,6 +127,9 @@ let exchangeRate =
     BackpackTfApi.getKeyExchangeRate configuration.BackpackTfCookie
     |> Async.RunSynchronously
 
+let db = Db.connectToMongoDb configuration.MongoDbUrl
+let listingsCollection = db |> Db.Listings.getCollection |> Async.RunSynchronously
+
 printfn "Exchange rate: %f" exchangeRate
 
 let getWsEventStream (url: string) =
@@ -153,29 +158,11 @@ let getWsEventStream (url: string) =
 
 let wsEventStream = getWsEventStream wsUrl
 
-let countSubscription declaration count =
-    printfn "%s events: %d" declaration count
-
 wsEventStream
 |> Observable.scan (fun acc x -> acc + (x |> List.length)) 0
-|> Observable.subscribe (countSubscription "Total")
+|> Observable.subscribe (fun x -> printfn "Total events: %d" x)
 |> ignore
 
-
-wsEventStream
-|> Observable.scan
-    (fun (accUpdate, accDelete) x ->
-        let updateCount, deleteCount =
-            x
-            |> List.partition (fun x -> x.event = ListingUpdate)
-            |> (fun (x, y) -> (x |> List.length, y |> List.length))
-
-        (accUpdate + updateCount, accDelete + deleteCount))
-    (0, 0)
-|> Observable.subscribe (fun (updateCount, deleteCount) ->
-    printfn "Update events: %d" updateCount
-    printfn "Delete events: %d" deleteCount)
-|> ignore
 
 
 let exitEvent = new ManualResetEvent(false)

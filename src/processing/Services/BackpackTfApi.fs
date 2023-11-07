@@ -9,9 +9,9 @@ module BackpackTfApi =
     [<Literal>]
     let MANNCO_SUPPLY_CRATE_KEY = "Mann Co. Supply Crate Key"
 
-    type Listing = { price: Metal }
+    type SnapshotListing = { price: Metal }
 
-    type ListingResponse = { listings: Listing list }
+    type SnapshotResponse = { listings: SnapshotListing list }
 
     let getKeyExchangeRate (cookie: string) =
         async {
@@ -24,7 +24,7 @@ module BackpackTfApi =
             let url = sprintf "https://backpack.tf/api/classifieds/listings/snapshot?%s" query
             use httpClient = new HttpClient()
             httpClient.DefaultRequestHeaders.Add("Cookie", cookie)
-            let! response = httpClient.GetFromJsonAsync<ListingResponse>(url) |> Async.AwaitTask
+            let! response = httpClient.GetFromJsonAsync<SnapshotResponse>(url) |> Async.AwaitTask
             let cheapestBuyListing = response.listings |> List.minBy (fun x -> x.price)
             return cheapestBuyListing.price / 1.0<keys>
         }

@@ -1,17 +1,12 @@
 namespace PricingTf.Processing.Events
 
 open System.Text.Json.Serialization
-
-type Tf2Currency = { metal: float; keys: float }
+open PricingTf.Processing.Models
 
 type Tf2NaturalCurrency =
     { raw: float
       short: string
       long: string }
-
-type ListingIntent =
-    | Buy
-    | Sell
 
 type SteamPrice =
     { currency: string
