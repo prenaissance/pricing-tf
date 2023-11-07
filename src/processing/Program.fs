@@ -6,9 +6,9 @@ open System.Text.Json.Nodes
 
 open Websocket.Client
 open Microsoft.Extensions.Configuration
-open Microsoft.Extensions.Configuration.EnvironmentVariables
 
 open PricingTf.Processing.Events
+open PricingTf.Processing.Services
 
 let getExamplePricingEvent () =
     { id = Convert.FromHexString "654780b6b179b639d30bf17a"
@@ -80,8 +80,9 @@ let getExamplePricingEvent () =
               sheen = None
               killstreaker = None }
           userAgent =
-            { client = "backpack.tf"
-              lastPulse = 1601902804 }
+            Some
+                { client = "backpack.tf"
+                  lastPulse = 1601902804 }
           user =
             { id = "asdasdasdas"
               name = "backpack.tf"
@@ -100,7 +101,9 @@ let getExamplePricingEvent () =
               bans = [] } } }
 
 [<CLIMutable>]
-type Config = { MongoDbUrl: string }
+type Config =
+    { MongoDbUrl: string
+      BackpackTfCookie: string }
 
 let configuration =
     let builder = ConfigurationBuilder()
@@ -108,6 +111,7 @@ let configuration =
     builder
         .SetBasePath(Directory.GetCurrentDirectory())
         .AddJsonFile("appsettings.json", optional = true, reloadOnChange = true)
+        .AddJsonFile("appsettings.Development.json", optional = true)
         .AddEnvironmentVariables()
     |> ignore
 
@@ -117,7 +121,11 @@ let configuration =
 [<Literal>]
 let wsUrl = "wss://ws.backpack.tf/events"
 
-type ParsedPair = PricingEvent * JsonNode
+let exchangeRate =
+    BackpackTfApi.getKeyExchangeRate configuration.BackpackTfCookie
+    |> Async.RunSynchronously
+
+printfn "Exchange rate: %f" exchangeRate
 
 let getWsEventStream (url: string) =
     let client = new WebsocketClient(Uri(url))

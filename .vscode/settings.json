@@ -1,10 +1,13 @@
 {
   "editor.inlayHints.enabled": "offUnlessPressed",
   "cSpell.words": [
+    "bptf",
+    "Bson",
     "craftable",
     "defindex",
     "killstreak",
     "killstreaker",
+    "MANNCO",
     "steamid"
   ],
   "[fsharp]": {

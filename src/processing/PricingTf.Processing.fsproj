@@ -4,6 +4,9 @@
     <TargetFramework>net8.0</TargetFramework>
   </PropertyGroup>
   <ItemGroup>
+    <Compile Include="Models/Tf2Currency.fs" />
+    <Compile Include="Models/Pricing.fs" />
+    <Compile Include="Services/BackpackTfApi.fs" />
     <Compile Include="Events/BpTfEvents.fs" />
     <Compile Include="Events/JsonConverters.fs" />
     <Compile Include="Program.fs" />
