@@ -79,5 +79,7 @@ module BpTfEventsConverters =
         options.Converters.Add(OptionConverter<CommunityPrice>())
         options.Converters.Add(OptionConverter<SuggestedPrice>())
         options.Converters.Add(OptionConverter<Origin>())
+        options.Converters.Add(OptionConverter<UserAgent>())
+        options.Converters.Add(OptionConverter<Sheen>())
         options.WriteIndented <- true
         options

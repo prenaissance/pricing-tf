@@ -118,7 +118,7 @@ type PricingEventPayload =
       status: string
       source: string
       item: ItemListing
-      userAgent: UserAgent
+      userAgent: UserAgent option
       user: User }
 
 type ListingType =
