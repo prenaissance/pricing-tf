@@ -3,6 +3,10 @@ namespace PricingTf.Processing.Events
 open System.Text.Json.Serialization
 open PricingTf.Processing.Models
 
+type ListingIntent =
+    | Buy
+    | Sell
+
 type Tf2NaturalCurrency =
     { raw: float
       short: string

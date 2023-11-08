@@ -9,7 +9,7 @@ module BackpackTfApi =
     [<Literal>]
     let MANNCO_SUPPLY_CRATE_KEY = "Mann Co. Supply Crate Key"
 
-    type SnapshotListing = { price: Metal }
+    type SnapshotListing = { price: Metal; userAgent: obj option }
 
     type SnapshotResponse = { listings: SnapshotListing list }
 
@@ -25,6 +25,11 @@ module BackpackTfApi =
             use httpClient = new HttpClient()
             httpClient.DefaultRequestHeaders.Add("Cookie", cookie)
             let! response = httpClient.GetFromJsonAsync<SnapshotResponse>(url) |> Async.AwaitTask
-            let cheapestBuyListing = response.listings |> List.minBy (fun x -> x.price)
+
+            let cheapestBuyListing =
+                response.listings
+                |> List.filter (fun x -> Option.isSome (x.userAgent))
+                |> List.minBy (fun x -> x.price)
+
             return cheapestBuyListing.price / 1.0<keys>
         }

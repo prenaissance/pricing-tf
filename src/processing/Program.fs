@@ -1,5 +1,5 @@
 ﻿open System
-open System.IO
+open System.Reflection
 open System.Threading
 open System.Text.Json
 
@@ -9,6 +9,7 @@ open Microsoft.Extensions.Configuration
 open PricingTf.Processing.Models
 open PricingTf.Processing.Events
 open PricingTf.Processing.Services
+open System.IO
 
 let getExamplePricingEvent () =
     { id = Convert.FromHexString "654780b6b179b639d30bf17a"
@@ -128,7 +129,7 @@ let exchangeRate =
     |> Async.RunSynchronously
 
 let db = Db.connectToMongoDb configuration.MongoDbUrl
-let listingsCollection = db |> Db.Listings.getCollection |> Async.RunSynchronously
+let listingsCollection = db |> Db.TradeItems.getCollection |> Async.RunSynchronously
 
 printfn "Exchange rate: %f" exchangeRate
 

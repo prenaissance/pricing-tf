@@ -10,21 +10,44 @@ module Db =
         let database = client.GetDatabase("backpack-tf-replica")
         database
 
-    module Listings =
+    module TradeItems =
         open MongoDB.Driver
         open PricingTf.Processing.Models
 
-        let private bumpedAtIndexModel =
-            let index = Builders<Listing>.IndexKeys.Ascending("bumpedAt")
-            let options = CreateIndexOptions()
-            options.ExpireAfter <- TimeSpan.FromHours(24.0)
-            CreateIndexModel<Listing>(index, options)
+        let private nameIndexKey = IndexKeysDefinitionBuilder<TradeItem>().Ascending("name")
+
+        let private buyBumpedAtIndexKey =
+            IndexKeysDefinitionBuilder<TradeItem>().Descending("buyListings.bumpedAt")
+
+        let private sellBumpedAtIndexKey =
+            IndexKeysDefinitionBuilder<TradeItem>().Descending("sellListings.bumpedAt")
+
+        let private sellPriceIndexKey =
+            IndexKeysDefinitionBuilder<TradeItem>().Ascending("sellListings.price.keys")
+
+        let private buyPriceIndexKey =
+            IndexKeysDefinitionBuilder<TradeItem>().Ascending("buyListings.price.keys")
+
+        let private buyListingIdKey =
+            IndexKeysDefinitionBuilder<TradeItem>()
+                .Hashed("buyListings.tradeDetails.listingId")
+
+        let private sellListingIdKey =
+            IndexKeysDefinitionBuilder<TradeItem>()
+                .Hashed("sellListings.tradeDetails.listingId")
+
+        let private indices =
+            [ nameIndexKey
+              buyBumpedAtIndexKey
+              sellBumpedAtIndexKey
+              sellPriceIndexKey
+              buyPriceIndexKey ]
+            |> List.map CreateIndexModel
 
         let getCollection (database: IMongoDatabase) =
             async {
-                let collection = database.GetCollection<Listing>("listings")
+                let collection = database.GetCollection<TradeItem>("trade-items")
 
-                let indices = [ bumpedAtIndexModel ]
                 do! collection.Indexes.CreateManyAsync(indices) |> Async.AwaitTask |> Async.Ignore
 
                 return collection
