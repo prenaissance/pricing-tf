@@ -7,9 +7,17 @@ type TradeDetails =
     { listingId: string
       tradeOfferUrl: string }
 
+type ListingIntent =
+    | Buy
+    | Sell
+
 [<CLIMutable>]
-type Listing =
-    { price: Tf2Currency
+type TradeListing =
+    { [<DefaultValue>]
+      id: ObjectId
+      itemName: string
+      intent: ListingIntent
+      price: Tf2Currency
       bumpedAt: DateTime
       isAutomatic: bool
       tradeDetails: TradeDetails }
@@ -20,7 +28,7 @@ type TradeItem =
         id: ObjectId
         name: string
         /// buy - actor making the listing is buying
-        buyListings: Listing list
+        buyListings: TradeListing list
         /// sell - actor making the listing is selling
-        sellListings: Listing list
+        sellListings: TradeListing list
     }

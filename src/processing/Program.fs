@@ -1,5 +1,4 @@
 ﻿open System
-open System.Reflection
 open System.Threading
 open System.Text.Json
 
@@ -9,6 +8,7 @@ open Microsoft.Extensions.Configuration
 open PricingTf.Processing.Models
 open PricingTf.Processing.Events
 open PricingTf.Processing.Services
+open PricingTf.Processing.MapReduce
 open System.IO
 
 let getExamplePricingEvent () =
@@ -44,31 +44,6 @@ let getExamplePricingEvent () =
               name = "The Ambassador"
               origin = None
               originalId = "5f7b1b4c4dd7f6c3a8a7b2a0"
-              price =
-                { steam =
-                    Some
-                        { currency = "metal"
-                          short = "0.00"
-                          long = "0.00 ref"
-                          raw = 0.0
-                          value = 0 }
-                  community =
-                    Some
-                        { value = 0.0
-                          valueHigh = 0.0
-                          currency = "metal"
-                          raw = 0.0
-                          short = "0.00"
-                          long = "0.00 ref"
-                          usd = 0.0
-                          updatedAt = 0
-                          difference = 0.0 }
-                  suggested =
-                    Some
-                        { raw = 0.0
-                          short = "0.00"
-                          long = "0.00 ref"
-                          usd = 0.0 } }
               quality =
                 { id = 6
                   name = "Unique"
@@ -129,7 +104,9 @@ let exchangeRate =
     |> Async.RunSynchronously
 
 let db = Db.connectToMongoDb configuration.MongoDbUrl
-let listingsCollection = db |> Db.TradeItems.getCollection |> Async.RunSynchronously
+
+let tradeListingsCollection =
+    db |> Db.TradeListings.getCollection |> Async.RunSynchronously
 
 printfn "Exchange rate: %f" exchangeRate
 
@@ -159,11 +136,43 @@ let getWsEventStream (url: string) =
 
 let wsEventStream = getWsEventStream wsUrl
 
-wsEventStream
-|> Observable.scan (fun acc x -> acc + (x |> List.length)) 0
+
+let countStream =
+    wsEventStream |> Observable.scan (fun acc x -> acc + List.length x) 0
+
+countStream
 |> Observable.subscribe (fun x -> printfn "Total events: %d" x)
 |> ignore
 
+let mutable processedCount = 0
+
+wsEventStream
+|> Observable.subscribe (fun event ->
+    try
+        async {
+            let upsert, delete = Etl.splitByUpsertAndDelete event
+            let upsertListings = upsert |> List.map (Etl.mapToListing exchangeRate)
+
+            let upsertListingsTask =
+                tradeListingsCollection |> Db.TradeListings.upsertListings upsertListings
+
+            let deleteListingsTask =
+                delete |> List.map (fun x -> x.id) |> Db.TradeListings.deleteListingsByIds
+                <| tradeListingsCollection
+
+            do!
+                [ upsertListingsTask |> Async.Ignore; deleteListingsTask |> Async.Ignore ]
+                |> Async.Parallel
+                |> Async.Ignore
+
+            processedCount <- processedCount + 1
+            printfn "Processed batch %d" processedCount
+
+        }
+        |> Async.Start
+    with e ->
+        printfn "Failed to process event: %A" e)
+|> ignore
 
 
 let exitEvent = new ManualResetEvent(false)

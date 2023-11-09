@@ -5,11 +5,12 @@
   </PropertyGroup>
   <ItemGroup>
     <Compile Include="Models/Tf2Currency.fs" />
-    <Compile Include="Models/TradeItem.fs" />
-    <Compile Include="Services/BackpackTfApi.fs" />
-    <Compile Include="Services/Db.fs" />
+    <Compile Include="Models/TradeListing.fs" />
     <Compile Include="Events/BpTfEvents.fs" />
     <Compile Include="Events/JsonConverters.fs" />
+    <Compile Include="MapReduce/Etl.fs" />
+    <Compile Include="Services/BackpackTfApi.fs" />
+    <Compile Include="Services/Db.fs" />
     <Compile Include="Program.fs" />
   </ItemGroup>
   <ItemGroup>

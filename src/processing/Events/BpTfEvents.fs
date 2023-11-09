@@ -3,10 +3,6 @@ namespace PricingTf.Processing.Events
 open System.Text.Json.Serialization
 open PricingTf.Processing.Models
 
-type ListingIntent =
-    | Buy
-    | Sell
-
 type Tf2NaturalCurrency =
     { raw: float
       short: string
@@ -88,7 +84,8 @@ type ItemListing =
       name: string
       origin: Origin option
       originalId: string
-      price: Price
+      // causes some deserialization issue for some reason
+      // price: Price
       quality: Quality
       summary: string
       level: int
