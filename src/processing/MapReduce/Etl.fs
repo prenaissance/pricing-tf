@@ -13,8 +13,9 @@ module Etl =
         |> fun (upserts, deletes) -> (upserts |> List.map mapToPayload, deletes |> List.map mapToPayload)
 
     let mapToListing exchangeRate payload =
-        { itemName = payload.item.baseName
+        { itemName = payload.item.name
           price = Tf2Currency.fromMixed payload.currencies.metal payload.currencies.keys exchangeRate
+          description = payload.details |> Option.defaultValue ""
           intent = payload.intent
           bumpedAt =
             payload.bumpedAt

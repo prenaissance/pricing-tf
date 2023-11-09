@@ -2,15 +2,31 @@ namespace PricingTf.Processing.Services
 
 module Db =
     open MongoDB.Driver
+    open MongoDB.Bson.Serialization
+    open PricingTf.Processing.Models
+    open MongoDB.Bson.Serialization.Serializers
+
+    type private ListingIntentSerializer() =
+        inherit SerializerBase<ListingIntent>()
+
+        override _.Serialize(context, _, value) =
+            let writer = context.Writer
+            writer.WriteString(ListingIntent.toString value)
+
+        override _.Deserialize(context, args) =
+            let reader = context.Reader
+            let value = reader.ReadString()
+            ListingIntent.fromString value
 
     let connectToMongoDb (connectionString: string) =
+        BsonSerializer.RegisterSerializer(typeof<ListingIntent>, ListingIntentSerializer())
+
         let client = new MongoClient(connectionString)
         let database = client.GetDatabase("backpack-tf-replica")
         database
 
     module TradeListings =
         open PricingTf.Processing.Models
-        open PricingTf.Processing.MapReduce
         open MongoDB.Bson
         open System
 
@@ -22,7 +38,7 @@ module Db =
             let indexKey =
                 IndexKeysDefinitionBuilder<TradeListing>()
                     .Ascending("listingName")
-                    .Ascending("intent")
+                    .Hashed("intent")
 
             CreateIndexModel(indexKey)
 
@@ -73,6 +89,7 @@ module Db =
                             .SetOnInsert((fun x -> x.id), ObjectId.GenerateNewId())
                             .Set((fun x -> x.bumpedAt), x.bumpedAt)
                             .Set((fun x -> x.price), x.price)
+                            .Set((fun x -> x.description), x.description)
                             .SetOnInsert((fun x -> x.itemName), x.itemName)
                             .SetOnInsert((fun x -> x.intent), x.intent)
                             .SetOnInsert((fun x -> x.isAutomatic), x.isAutomatic)

@@ -27,7 +27,8 @@ let getExamplePricingEvent () =
               long = "27 keys, 51.22 ref" }
           tradeOffersPreferred = true
           buyoutOnly = true
-          details = "I am buying your Perennial Petals Reel Fly Hat for 27 keys, 51.22 ref, I have 0 / 1. Peace Out"
+          details =
+            Some "I am buying your Perennial Petals Reel Fly Hat for 27 keys, 51.22 ref, I have 0 / 1. Peace Out"
           listedAt = 1699184822
           bumpedAt = 1699184822
           intent = Buy
@@ -136,6 +137,10 @@ let getWsEventStream (url: string) =
 
 let wsEventStream = getWsEventStream wsUrl
 
+// wsEventStream
+// |> Observable.map (fun x -> x |> List.take 3)
+// |> Observable.subscribe (printfn "%A")
+// |> ignore
 
 let countStream =
     wsEventStream |> Observable.scan (fun acc x -> acc + List.length x) 0

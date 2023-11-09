@@ -72,7 +72,7 @@ type User =
       tradeOfferUrl: string
       isMarketplaceSeller: bool
       flagImpersonated: bool
-      bans: int list }
+      bans: obj }
 
 type ItemListing =
     { appid: int
@@ -106,7 +106,7 @@ type PricingEventPayload =
       value: Tf2NaturalCurrency
       tradeOffersPreferred: bool
       buyoutOnly: bool
-      details: string
+      details: string option
       listedAt: int
       bumpedAt: int
       intent: ListingIntent

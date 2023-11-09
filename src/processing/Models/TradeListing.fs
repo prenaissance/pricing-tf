@@ -11,24 +11,30 @@ type ListingIntent =
     | Buy
     | Sell
 
+    static member fromString value =
+        match value with
+        | "buy" -> Buy
+        | "sell" -> Sell
+        | _ -> raise <| ArgumentException("Invalid listing intent")
+
+    override this.ToString() =
+        match this with
+        | Buy -> "buy"
+        | Sell -> "sell"
+
+    static member toString =
+        function
+        | Buy -> "buy"
+        | Sell -> "sell"
+
 [<CLIMutable>]
 type TradeListing =
     { [<DefaultValue>]
       id: ObjectId
       itemName: string
+      description: string
       intent: ListingIntent
       price: Tf2Currency
       bumpedAt: DateTime
       isAutomatic: bool
       tradeDetails: TradeDetails }
-
-[<CLIMutable>]
-type TradeItem =
-    {
-        id: ObjectId
-        name: string
-        /// buy - actor making the listing is buying
-        buyListings: TradeListing list
-        /// sell - actor making the listing is selling
-        sellListings: TradeListing list
-    }

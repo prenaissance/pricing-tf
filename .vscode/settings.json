@@ -8,7 +8,9 @@
     "killstreak",
     "killstreaker",
     "MANNCO",
-    "steamid"
+    "steamid",
+    "Upsert",
+    "upserts"
   ],
   "[fsharp]": {
     "diffEditor.ignoreTrimWhitespace": false,
