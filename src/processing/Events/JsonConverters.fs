@@ -83,5 +83,8 @@ module BpTfEventsConverters =
         options.Converters.Add(OptionConverter<Origin>())
         options.Converters.Add(OptionConverter<UserAgent>())
         options.Converters.Add(OptionConverter<Sheen>())
+        options.Converters.Add(OptionConverter<Killstreaker>())
+        options.Converters.Add(OptionConverter<Particle>())
+        options.Converters.Add(OptionConverter<int>())
         options.WriteIndented <- true
         options

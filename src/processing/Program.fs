@@ -1,4 +1,5 @@
 ﻿open System
+open System.IO
 open System.Threading
 open System.Text.Json
 
@@ -9,7 +10,7 @@ open PricingTf.Processing.Models
 open PricingTf.Processing.Events
 open PricingTf.Processing.Services
 open PricingTf.Processing.MapReduce
-open System.IO
+open PricingTf.Processing.Utils
 
 let getExamplePricingEvent () =
     { id = Convert.FromHexString "654780b6b179b639d30bf17a"
@@ -38,7 +39,7 @@ let getExamplePricingEvent () =
           item =
             { appid = 440
               baseName = "Reel Fly Hat"
-              defindex = 61
+              defindex = Some 61
               id = "5f7b1b4c4dd7f6c3a8a7b2a0"
               imageUrl = "https://files.backpack.tf/images/440/61.png"
               marketName = "The Ambassador"
@@ -82,6 +83,7 @@ let getExamplePricingEvent () =
 [<CLIMutable>]
 type Config =
     { MongoDbUrl: string
+      MongoDbName: string
       BackpackTfCookie: string }
 
 let configuration =
@@ -94,7 +96,11 @@ let configuration =
         .AddEnvironmentVariables()
     |> ignore
 
-    builder.Build().Get<Config>()
+    let config = builder.Build().Get<Config>()
+
+    { config with
+        MongoDbUrl = config.MongoDbUrl |> StringUtils.defaultIfEmpty "mongodb://localhost:27017"
+        MongoDbName = config.MongoDbName |> StringUtils.defaultIfEmpty "backpack-tf-replica" }
 
 
 [<Literal>]
@@ -104,7 +110,8 @@ let exchangeRate =
     BackpackTfApi.getKeyExchangeRate configuration.BackpackTfCookie
     |> Async.RunSynchronously
 
-let db = Db.connectToMongoDb configuration.MongoDbUrl
+let db = Db.connectToMongoDb configuration.MongoDbUrl configuration.MongoDbName
+
 
 let tradeListingsCollection =
     db |> Db.TradeListings.getCollection |> Async.RunSynchronously
@@ -152,10 +159,16 @@ countStream
 let mutable processedCount = 0
 
 wsEventStream
-|> Observable.subscribe (fun event ->
+|> Observable.subscribe (fun events ->
     try
         async {
-            let upsert, delete = Etl.splitByUpsertAndDelete event
+            let filteredEvents =
+                events
+                |> Etl.filterSpelledEvents
+                |> Etl.filterUnusualWeaponsEvents
+                |> Seq.toList
+
+            let upsert, delete = Etl.splitByUpsertAndDelete filteredEvents
             let upsertListings = upsert |> List.map (Etl.mapToListing exchangeRate)
 
             let upsertListingsTask =

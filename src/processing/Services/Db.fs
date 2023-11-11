@@ -18,11 +18,11 @@ module Db =
             let value = reader.ReadString()
             ListingIntent.fromString value
 
-    let connectToMongoDb (connectionString: string) =
+    let connectToMongoDb (connectionString: string) dbName =
         BsonSerializer.RegisterSerializer(typeof<ListingIntent>, ListingIntentSerializer())
 
         let client = new MongoClient(connectionString)
-        let database = client.GetDatabase("backpack-tf-replica")
+        let database = client.GetDatabase dbName
         database
 
     module TradeListings =

@@ -77,7 +77,7 @@ type User =
 type ItemListing =
     { appid: int
       baseName: string
-      defindex: int
+      defindex: int option
       id: string
       imageUrl: string
       marketName: string
