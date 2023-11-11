@@ -28,3 +28,23 @@ Environment variables:
 This services provides a gRPC and a REST API to query for item prices or listings.
 
 WIP: Not yet implemented
+
+## Running locally
+
+### Prerequisites
+
+- [Docker](https://docs.docker.com/get-docker/)
+- [Docker Compose](https://docs.docker.com/compose/install/)
+- [Dotnet SDK](https://dotnet.microsoft.com/download)
+
+### Local Development
+
+1. Run `docker compose -f=docker-compose.yml -f=docker-compose.dev.yml up -d`
+2. For needed services copy `appsetings.json` : `cp src/processing/appsettings.json src/processing/appsettings.Development.json`
+3. Replace needed env variables with yours
+4. Run needed services, example for processing: `cd src/processing && dotnet run`
+
+### Local Production run
+
+1. Change needed env variables in `docker-compose.prod.yml`
+2. Run `docker compose -f=docker-compose.yml -f=docker-compose.prod.yml up -d --build`

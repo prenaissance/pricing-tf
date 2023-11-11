@@ -1,0 +1,12 @@
+services:
+  processing:
+    build:
+      context: .
+      dockerfile: src/processing/Dockerfile
+    depends_on:
+      mongo:
+        condition: service_started
+    environment:
+      - MongoDbUrl=mongodb://mongo:27017
+      - MongoDbName=backpack-tf-replica
+      - BackpackTfCookie= # Your backpack.tf cookie

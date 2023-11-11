@@ -102,6 +102,7 @@ let configuration =
         MongoDbUrl = config.MongoDbUrl |> StringUtils.defaultIfEmpty "mongodb://localhost:27017"
         MongoDbName = config.MongoDbName |> StringUtils.defaultIfEmpty "backpack-tf-replica" }
 
+printfn "Cookies: %s" configuration.BackpackTfCookie
 
 [<Literal>]
 let wsUrl = "wss://ws.backpack.tf/events"
