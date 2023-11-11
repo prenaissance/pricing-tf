@@ -6,6 +6,9 @@ open System.Net.Http.Json
 open PricingTf.Processing.Models
 
 module BackpackTfApi =
+    open System.Text.Json
+    open PricingTf.Processing.Events
+
     [<Literal>]
     let MANNCO_SUPPLY_CRATE_KEY = "Mann Co. Supply Crate Key"
 
@@ -24,10 +27,13 @@ module BackpackTfApi =
             let url = sprintf "https://backpack.tf/api/classifieds/listings/snapshot?%s" query
             use httpClient = new HttpClient()
             httpClient.DefaultRequestHeaders.Add("Cookie", cookie)
-            let! response = httpClient.GetFromJsonAsync<SnapshotResponse>(url) |> Async.AwaitTask
+            let! response = httpClient.GetStringAsync(url) |> Async.AwaitTask
+
+            let json =
+                JsonSerializer.Deserialize<SnapshotResponse>(response, BpTfEventsConverters.jsonOptions)
 
             let cheapestBuyListing =
-                response.listings
+                json.listings
                 |> List.filter (fun x -> Option.isSome (x.userAgent))
                 |> List.minBy (fun x -> x.price)
 
