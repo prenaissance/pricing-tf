@@ -6,6 +6,15 @@ module TfPrices =
     open PricingTf.Processing.Models
 
     [<Literal>]
+    let private filterOutHumanListingsStage =
+        """
+{
+  $match: {
+    isAutomatic: true,
+  }
+}"""
+
+    [<Literal>]
     let private groupStage =
         """
 {
@@ -207,12 +216,13 @@ module TfPrices =
   },
 }"""
 
-    [<Literal>]
-    let private outputViewStage =
-        """
-{
-  $out: "tf-prices",
-}"""
+    let private getOutputViewStage viewName =
+        sprintf
+            """
+            {
+              $out: "%s",
+            }"""
+            viewName
 
     let refreshPricesView (collection: IMongoCollection<TradeListing>) =
         let pipeline =
@@ -222,7 +232,24 @@ module TfPrices =
                 .AppendStage(addPricesFieldsStage)
                 .AppendStage(projectFinalListingStage)
                 .AppendStage(projectFinalDataStage)
-                .AppendStage(outputViewStage)
+                .AppendStage(getOutputViewStage "tf-prices")
+
+        let options = AggregateOptions()
+        options.AllowDiskUse <- true
+
+        collection.AggregateToCollectionAsync(pipeline, options = options)
+        |> Async.AwaitTask
+
+    let refreshBotsPricesView (collection: IMongoCollection<TradeListing>) =
+        let pipeline =
+            EmptyPipelineDefinition<TradeListing>()
+                .AppendStage(filterOutHumanListingsStage)
+                .AppendStage(groupStage)
+                .AppendStage(projectFilteredListingsStage)
+                .AppendStage(addPricesFieldsStage)
+                .AppendStage(projectFinalListingStage)
+                .AppendStage(projectFinalDataStage)
+                .AppendStage(getOutputViewStage "tf-bots-prices")
 
         let options = AggregateOptions()
         options.AllowDiskUse <- true

@@ -193,7 +193,11 @@ wsEventStream
 |> ignore
 
 let materializeViewsCallback () =
-    TfPrices.refreshPricesView tradeListingsCollection |> Async.Start
+    [ TfPrices.refreshPricesView tradeListingsCollection
+      TfPrices.refreshBotsPricesView tradeListingsCollection ]
+    |> Async.Parallel
+    |> Async.Ignore
+    |> Async.Start
 
 
 let timer = new Timers.Timer(TimeSpan.FromMinutes 1)
