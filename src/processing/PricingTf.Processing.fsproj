@@ -1,7 +1,8 @@
-<Project Sdk="Microsoft.NET.Sdk">
+﻿<Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
     <OutputType>Exe</OutputType>
     <TargetFramework>net8.0</TargetFramework>
+    <UserSecretsId>f3cadaf3-ce54-498a-8b17-e96913b7cb47</UserSecretsId>
   </PropertyGroup>
   <ItemGroup>
     <Compile Include="Utils/StringUtils.fs" />
@@ -12,8 +13,10 @@
     <Compile Include="MapReduce/Etl.fs" />
     <Compile Include="Services/BackpackTfApi.fs" />
     <Compile Include="Services/Db.fs" />
+    <Compile Include="Workers/TfPrices.fs" />
     <Compile Include="Program.fs" />
   </ItemGroup>
+
   <ItemGroup>
     <PackageReference Include="Microsoft.Extensions.Configuration" Version="8.0.0-rc.2.23479.6" />
     <PackageReference Include="Microsoft.Extensions.Configuration.Binder" Version="8.0.0-rc.2.23479.6" />

@@ -11,6 +11,7 @@ open PricingTf.Processing.Events
 open PricingTf.Processing.Services
 open PricingTf.Processing.MapReduce
 open PricingTf.Processing.Utils
+open PricingTf.Processing.Workers
 
 let getExamplePricingEvent () =
     { id = Convert.FromHexString "654780b6b179b639d30bf17a"
@@ -102,8 +103,6 @@ let configuration =
         MongoDbUrl = config.MongoDbUrl |> StringUtils.defaultIfEmpty "mongodb://localhost:27017"
         MongoDbName = config.MongoDbName |> StringUtils.defaultIfEmpty "backpack-tf-replica" }
 
-printfn "Cookies: %s" configuration.BackpackTfCookie
-
 [<Literal>]
 let wsUrl = "wss://ws.backpack.tf/events"
 
@@ -193,6 +192,21 @@ wsEventStream
         printfn "Failed to process event: %A" e)
 |> ignore
 
+let materializeViewsCallback () =
+    TfPrices.refreshPricesView tradeListingsCollection |> Async.Start
+
+
+let timer = new Timers.Timer(TimeSpan.FromMinutes 1)
+timer.AutoReset <- true
+
+timer.Elapsed.Add(fun _ ->
+    try
+        materializeViewsCallback ()
+        printfn "Materialized views refreshed at %s" (DateTimeOffset.UtcNow.ToString "o")
+    with e ->
+        printfn "Failed to refresh materialized views: %A" e)
+
+timer.Start()
 
 let exitEvent = new ManualResetEvent(false)
 exitEvent.WaitOne() |> ignore
