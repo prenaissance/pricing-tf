@@ -213,6 +213,9 @@ module TfPrices =
         },
       },
     },
+    updatedAt: {
+      $min: ["$sellListing.bumpedAt", "$buyListing.bumpedAt"]
+    }
   },
 }"""
 
