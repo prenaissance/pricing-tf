@@ -4,10 +4,12 @@ on:
       - master
     paths:
       - "src/processing/**"
+      - ".github/workflows/processing-docker.yml"
 
 env:
   IMAGE_VERSION: "1"
   IMAGE_TAG: "${{ github.sha }}"
+  IMAGE_NAME: prenaissance/pricing-tf-processing
 
 jobs:
   build:
@@ -26,6 +28,6 @@ jobs:
           file: ./src/processing/Dockerfile
           push: true
           tags: |
-            prenaissance/processing:${{ env.IMAGE_VERSION }}
-            prenaissance/processing:${{ env.IMAGE_TAG }}
-            prenaissance/processing:latest
+            ${{ env.IMAGE_NAME }}:${{ env.IMAGE_VERSION }}
+            ${{ env.IMAGE_NAME }}:${{ env.IMAGE_TAG }}
+            ${{ env.IMAGE_NAME }}:latest
