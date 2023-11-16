@@ -7,8 +7,6 @@
   </PropertyGroup>
   <ItemGroup>
     <Compile Include="Utils/StringUtils.fs" />
-    <Compile Include="Models/Tf2Currency.fs" />
-    <Compile Include="Models/TradeListing.fs" />
     <Compile Include="Events/BpTfEvents.fs" />
     <Compile Include="Events/JsonConverters.fs" />
     <Compile Include="MapReduce/Etl.fs" />
@@ -25,5 +23,9 @@
     <PackageReference Include="Microsoft.Extensions.Configuration.Json" Version="8.0.0" />
     <PackageReference Include="MongoDB.Driver" Version="2.22.0" />
     <PackageReference Include="Websocket.Client" Version="5.0.0" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\common\PricingTf.Common.fsproj" />
   </ItemGroup>
 </Project>

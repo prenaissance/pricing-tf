@@ -1,8 +1,8 @@
 namespace PricingTf.Processing.MapReduce
 
 module Etl =
+    open PricingTf.Common.Models
     open PricingTf.Processing.Events
-    open PricingTf.Processing.Models
     open System
     open System.Text.RegularExpressions
 

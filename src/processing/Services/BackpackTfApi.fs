@@ -1,9 +1,8 @@
 namespace PricingTf.Processing.Services
 
 open System.Net.Http
-open System.Net.Http.Json
 
-open PricingTf.Processing.Models
+open PricingTf.Common.Models
 
 module BackpackTfApi =
     open System.Text.Json

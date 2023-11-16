@@ -3,7 +3,8 @@ namespace PricingTf.Processing.Workers
 module TfPrices =
     open MongoDB.Driver
     open MongoDB.Bson
-    open PricingTf.Processing.Models
+    open PricingTf.Common.Models
+    open PricingTf.Common.Configuration
 
     [<Literal>]
     let private filterOutHumanListingsStage =
@@ -235,7 +236,7 @@ module TfPrices =
                 .AppendStage(addPricesFieldsStage)
                 .AppendStage(projectFinalListingStage)
                 .AppendStage(projectFinalDataStage)
-                .AppendStage(getOutputViewStage "tf-prices")
+                .AppendStage(getOutputViewStage PricingCollection.PricesView)
 
         let options = AggregateOptions()
         options.AllowDiskUse <- true
@@ -252,7 +253,7 @@ module TfPrices =
                 .AppendStage(addPricesFieldsStage)
                 .AppendStage(projectFinalListingStage)
                 .AppendStage(projectFinalDataStage)
-                .AppendStage(getOutputViewStage "tf-bots-prices")
+                .AppendStage(getOutputViewStage PricingCollection.BotPricesView)
 
         let options = AggregateOptions()
         options.AllowDiskUse <- true

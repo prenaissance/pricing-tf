@@ -3,7 +3,7 @@ namespace PricingTf.Processing.Services
 module Db =
     open MongoDB.Driver
     open MongoDB.Bson.Serialization
-    open PricingTf.Processing.Models
+    open PricingTf.Common.Models
     open MongoDB.Bson.Serialization.Serializers
 
     type private ListingIntentSerializer() =
@@ -26,7 +26,7 @@ module Db =
         database
 
     module TradeListings =
-        open PricingTf.Processing.Models
+        open PricingTf.Common.Models
         open MongoDB.Bson
         open System
 

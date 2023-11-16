@@ -6,7 +6,7 @@ open System.Text.Json
 open Websocket.Client
 open Microsoft.Extensions.Configuration
 
-open PricingTf.Processing.Models
+open PricingTf.Common.Models
 open PricingTf.Processing.Events
 open PricingTf.Processing.Services
 open PricingTf.Processing.MapReduce

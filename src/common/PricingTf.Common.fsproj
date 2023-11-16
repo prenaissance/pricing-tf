@@ -6,6 +6,7 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <Compile Include="Configuration/PricingCollection.fs" />
     <Compile Include="Models/Tf2Currency.fs" />
     <Compile Include="Models/TradeListing.fs" />
   </ItemGroup>

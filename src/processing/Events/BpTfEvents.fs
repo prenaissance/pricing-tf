@@ -1,7 +1,7 @@
 namespace PricingTf.Processing.Events
 
 open System.Text.Json.Serialization
-open PricingTf.Processing.Models
+open PricingTf.Common.Models
 
 type Tf2NaturalCurrency =
     { raw: float
