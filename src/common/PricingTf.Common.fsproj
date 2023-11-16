@@ -10,6 +10,7 @@
     <Compile Include="Models/Tf2Currency.fs" />
     <Compile Include="Models/TradeListing.fs" />
     <Compile Include="Serialization/JsonConverters.fs" />
+    <Compile Include="Serialization/BsonConverters.fs" />
     <Compile Include="Services/BackpackTfApi.fs" />
   </ItemGroup>
 

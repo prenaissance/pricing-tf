@@ -4,19 +4,7 @@ module Db =
     open MongoDB.Driver
     open MongoDB.Bson.Serialization
     open PricingTf.Common.Models
-    open MongoDB.Bson.Serialization.Serializers
-
-    type private ListingIntentSerializer() =
-        inherit SerializerBase<ListingIntent>()
-
-        override _.Serialize(context, _, value) =
-            let writer = context.Writer
-            writer.WriteString(ListingIntent.toString value)
-
-        override _.Deserialize(context, args) =
-            let reader = context.Reader
-            let value = reader.ReadString()
-            ListingIntent.fromString value
+    open PricingTf.Common.Serialization
 
     let connectToMongoDb (connectionString: string) dbName =
         BsonSerializer.RegisterSerializer(typeof<ListingIntent>, ListingIntentSerializer())
@@ -29,6 +17,7 @@ module Db =
         open PricingTf.Common.Models
         open MongoDB.Bson
         open System
+        open PricingTf.Common.Configuration
 
         let private nameIndexModel =
             let indexKey = IndexKeysDefinitionBuilder<TradeListing>().Hashed("listingName")
@@ -68,7 +57,8 @@ module Db =
 
         let getCollection (database: IMongoDatabase) =
             async {
-                let collection = database.GetCollection<TradeListing>("trade-listings")
+                let collection =
+                    database.GetCollection<TradeListing>(PricingCollection.TradeListings)
 
                 do! collection.Indexes.CreateManyAsync(indices) |> Async.AwaitTask |> Async.Ignore
 

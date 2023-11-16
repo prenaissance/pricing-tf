@@ -1,6 +1,6 @@
 namespace PricingTf.WebApi.Configuration;
 
 public record MongoDbConfiguration(
-    string MongoDbUrl,
-    string MongoDbName
+    string MongoDbUrl = "mongodb://localhost:27117",
+    string MongoDbName = "backpack-tf-replica"
 );
