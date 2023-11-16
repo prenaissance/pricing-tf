@@ -1,0 +1,32 @@
+syntax = "proto3";
+
+option csharp_namespace = "PricingTf.WebApi";
+import "google/protobuf/timestamp.proto";
+
+package pricingTf;
+
+service Pricing {
+  rpc GetPricing (ItemRequest) returns (ItemPricing);
+  rpc GetBotPricing (ItemRequest) returns (ItemPricing);
+}
+
+message ItemRequest {
+  string name = 1;
+}
+
+message TradeDetails {
+  string listingId = 1;
+  string tradeOfferUrl = 2;
+}
+
+message PricingDetails {
+  double price = 1;
+  TradeDetails tradeDetails = 2;
+}
+
+message ItemPricing {
+  string name = 1;
+  optional PricingDetails buy = 2;
+  optional PricingDetails sell = 3;
+  google.protobuf.Timestamp updatedAt = 4;
+}
