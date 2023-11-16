@@ -106,9 +106,7 @@ let configuration =
 [<Literal>]
 let wsUrl = "wss://ws.backpack.tf/events"
 
-let exchangeRate =
-    BackpackTfApi.getKeyExchangeRate configuration.BackpackTfCookie
-    |> Async.RunSynchronously
+let exchangeRate = BackpackTfApi.GetKeyExchangeRate configuration.BackpackTfCookie
 
 let db = Db.connectToMongoDb configuration.MongoDbUrl configuration.MongoDbName
 

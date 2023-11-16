@@ -6,7 +6,7 @@ open PricingTf.Common.Models
 
 module BackpackTfApi =
     open System.Text.Json
-    open PricingTf.Processing.Events
+    open PricingTf.Common.Serialization
 
     [<Literal>]
     let MANNCO_SUPPLY_CRATE_KEY = "Mann Co. Supply Crate Key"
@@ -15,7 +15,13 @@ module BackpackTfApi =
 
     type SnapshotResponse = { listings: SnapshotListing list }
 
-    let getKeyExchangeRate (cookie: string) =
+    let private jsonOptions =
+        let options = JsonSerializerOptions()
+        options.Converters.Add(OptionConverter<obj>())
+
+        options
+
+    let GetKeyExchangeRateAsync (cookie: string) =
         async {
             let queryParams = [ "sku", MANNCO_SUPPLY_CRATE_KEY; "appid", 440 |> string ]
 
@@ -28,8 +34,7 @@ module BackpackTfApi =
             httpClient.DefaultRequestHeaders.Add("Cookie", cookie)
             let! response = httpClient.GetStringAsync(url) |> Async.AwaitTask
 
-            let json =
-                JsonSerializer.Deserialize<SnapshotResponse>(response, BpTfEventsConverters.jsonOptions)
+            let json = JsonSerializer.Deserialize<SnapshotResponse>(response, jsonOptions)
 
             let cheapestBuyListing =
                 json.listings
@@ -38,3 +43,7 @@ module BackpackTfApi =
 
             return cheapestBuyListing.price / 1.0<keys>
         }
+        |> Async.StartAsTask
+
+    let GetKeyExchangeRate (cookie: string) =
+        GetKeyExchangeRateAsync cookie |> Async.AwaitTask |> Async.RunSynchronously

@@ -5,6 +5,7 @@ open System.Text.Json
 
 module BpTfEventsConverters =
     open PricingTf.Common.Models
+    open PricingTf.Common.Serialization
 
     type ListingIntentConverter() =
         inherit JsonConverter<ListingIntent>()
@@ -55,22 +56,6 @@ module BpTfEventsConverters =
                 false
 
         override _.Write(writer, value, _) = writer.WriteBooleanValue(value)
-
-    type OptionConverter<'T>() =
-        inherit JsonConverter<'T option>()
-
-        override _.Read(reader, _, _) =
-            match reader.TokenType with
-            | JsonTokenType.Null
-            | JsonTokenType.None -> None
-            | _ ->
-                let value = JsonSerializer.Deserialize<'T>(&reader)
-                Some value
-
-        override _.Write(writer, value, _) =
-            match value with
-            | Some value -> JsonSerializer.Serialize(writer, value)
-            | None -> writer.WriteNullValue()
 
     let jsonOptions =
         let options = JsonSerializerOptions()

@@ -2,12 +2,14 @@ syntax = "proto3";
 
 option csharp_namespace = "PricingTf.WebApi";
 import "google/protobuf/timestamp.proto";
+import "google/protobuf/empty.proto";
 
 package pricingTf;
 
 service Pricing {
   rpc GetPricing (ItemRequest) returns (ItemPricing);
   rpc GetBotPricing (ItemRequest) returns (ItemPricing);
+  rpc GetKeyExchangeRate (google.protobuf.Empty) returns (KeyExchangeRate);
 }
 
 message ItemRequest {
@@ -29,4 +31,9 @@ message ItemPricing {
   optional PricingDetails buy = 2;
   optional PricingDetails sell = 3;
   google.protobuf.Timestamp updatedAt = 4;
+}
+
+message KeyExchangeRate {
+  double metal = 1;
+  google.protobuf.Timestamp updatedAt = 2;
 }

@@ -10,7 +10,6 @@
     <Compile Include="Events/BpTfEvents.fs" />
     <Compile Include="Events/JsonConverters.fs" />
     <Compile Include="MapReduce/Etl.fs" />
-    <Compile Include="Services/BackpackTfApi.fs" />
     <Compile Include="Services/Db.fs" />
     <Compile Include="Workers/TfPrices.fs" />
     <Compile Include="Program.fs" />
