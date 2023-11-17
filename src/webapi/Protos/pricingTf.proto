@@ -33,7 +33,13 @@ message ItemPricing {
   google.protobuf.Timestamp updatedAt = 4;
 }
 
+enum KeyExchangeSource {
+  Listings = 0;
+  Snapshot = 1;
+}
+
 message KeyExchangeRate {
   double metal = 1;
   google.protobuf.Timestamp updatedAt = 2;
+  KeyExchangeSource source = 3;
 }

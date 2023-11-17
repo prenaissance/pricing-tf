@@ -1,11 +1,8 @@
 using MongoDB.Bson.Serialization;
 using MongoDB.Bson.Serialization.Conventions;
 using MongoDB.Driver;
-using PricingTf.Common.Models;
 using PricingTf.Common.Serialization;
-using PricingTf.WebApi;
 using PricingTf.WebApi.Configuration;
-using PricingTf.WebApi.Models.PricedItem;
 using PricingTf.WebApi.Services;
 
 var conventionPack = new ConventionPack { new CamelCaseElementNameConvention() };

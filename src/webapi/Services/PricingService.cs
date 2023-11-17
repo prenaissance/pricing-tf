@@ -49,12 +49,12 @@ public class PricingService : Pricing.PricingBase
         var listings = await _tradeListingsCollection
             .Find(builder.And(
                 builder.Eq("itemName", BackpackTfApi.MANNCO_SUPPLY_CRATE_KEY),
-                builder.Gte("createdAt", DateTime.UtcNow.AddHours(-1)),
+                builder.Gte("bumpedAt", DateTime.UtcNow.AddHours(-1)),
                 builder.Eq("isAutomatic", true),
-                builder.Eq("intent", "buy")
+                builder.Eq("intent", "sell")
             )).ToListAsync();
 
-        var listing = listings.MaxBy(x => x.price.metal);
+        var listing = listings.MinBy(x => x.price.metal);
         if (listing is null)
         {
             return null;
@@ -63,7 +63,8 @@ public class PricingService : Pricing.PricingBase
         return new()
         {
             Metal = listing.price.metal,
-            UpdatedAt = Timestamp.FromDateTime(listing.bumpedAt)
+            UpdatedAt = Timestamp.FromDateTime(listing.bumpedAt),
+            Source = KeyExchangeSource.Listings
         };
     }
 
@@ -87,7 +88,8 @@ public class PricingService : Pricing.PricingBase
         return new()
         {
             Metal = await BackpackTfApi.GetKeyExchangeRateAsync(cookie),
-            UpdatedAt = Timestamp.FromDateTime(DateTime.UtcNow)
+            UpdatedAt = Timestamp.FromDateTime(DateTime.UtcNow),
+            Source = KeyExchangeSource.Snapshot
         };
     }
 }
