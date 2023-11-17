@@ -15,8 +15,6 @@ Image name: `prenaissance/pricing-tf-processing`
 
 Environment variables:
 
----
-
 | Name             | Description                           | Default value             |
 | ---------------- | ------------------------------------- | ------------------------- |
 | MongoDbUrl       | The url of the mongo database         | mongodb://localhost:27017 |
@@ -25,9 +23,69 @@ Environment variables:
 
 ### API
 
-This services provides a gRPC and a REST API to query for item prices or listings.
+This services provides a gRPC and a REST API to query for item prices or listings. This CRUD service is an extension to the processing service and requires connecting it to the same database.
 
-WIP: Not yet implemented
+WIP: REST Api not yet implemented
+
+Image name: `prenaissance/pricing-tf-webapi` Exposed port: `8080`
+
+Environment variables:
+
+| Name             | Description                     | Default value             |
+| ---------------- | ------------------------------- | ------------------------- |
+| MongoDbUrl       | The url of the mongo database   | mongodb://localhost:27017 |
+| MongoDbName      | The name of the mongo database  | backpack-tf-replica       |
+| BackpackTfCookie | Used as fallback for key prices | `null`                    |
+
+Contracts:
+
+```protobuf
+syntax = "proto3";
+
+option csharp_namespace = "PricingTf.WebApi";
+import "google/protobuf/timestamp.proto";
+import "google/protobuf/empty.proto";
+
+package pricingTf;
+
+service Pricing {
+  rpc GetPricing (ItemRequest) returns (ItemPricing);
+  rpc GetBotPricing (ItemRequest) returns (ItemPricing);
+  rpc GetKeyExchangeRate (google.protobuf.Empty) returns (KeyExchangeRate);
+}
+
+message ItemRequest {
+  string name = 1;
+}
+
+message TradeDetails {
+  string listingId = 1;
+  string tradeOfferUrl = 2;
+}
+
+message PricingDetails {
+  double price = 1;
+  TradeDetails tradeDetails = 2;
+}
+
+message ItemPricing {
+  string name = 1;
+  optional PricingDetails buy = 2;
+  optional PricingDetails sell = 3;
+  google.protobuf.Timestamp updatedAt = 4;
+}
+
+enum KeyExchangeSource {
+  Listings = 0;
+  Snapshot = 1;
+}
+
+message KeyExchangeRate {
+  double metal = 1;
+  google.protobuf.Timestamp updatedAt = 2;
+  KeyExchangeSource source = 3;
+}
+```
 
 ## Running locally
 
