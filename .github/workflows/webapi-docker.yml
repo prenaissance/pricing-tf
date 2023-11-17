@@ -3,14 +3,14 @@ on:
     branches:
       - master
     paths:
-      - "src/processing/**"
+      - "src/webapi/**"
       - "src/common/**"
-      - ".github/workflows/processing-docker.yml"
+      - ".github/workflows/webapi-docker.yml"
 
 env:
   IMAGE_VERSION: "1"
   IMAGE_TAG: "${{ github.sha }}"
-  IMAGE_NAME: prenaissance/pricing-tf-processing
+  IMAGE_NAME: prenaissance/pricing-tf-webapi
 
 jobs:
   build:
@@ -26,7 +26,7 @@ jobs:
         uses: docker/build-push-action@v5
         with:
           context: .
-          file: ./src/processing/Dockerfile
+          file: ./src/webapi/Dockerfile
           push: true
           tags: |
             ${{ env.IMAGE_NAME }}:${{ env.IMAGE_VERSION }}
