@@ -106,7 +106,12 @@ let configuration =
 [<Literal>]
 let wsUrl = "wss://ws.backpack.tf/events"
 
-let exchangeRate = BackpackTfApi.GetKeyExchangeRate configuration.BackpackTfCookie
+let getExchangeRate () =
+    let rate = BackpackTfApi.GetKeyExchangeRate configuration.BackpackTfCookie
+    printfn "Current exchange rate: %f" rate
+    rate
+
+let mutable exchangeRate = getExchangeRate ()
 
 let db = Db.connectToMongoDb configuration.MongoDbUrl configuration.MongoDbName
 
@@ -114,7 +119,6 @@ let db = Db.connectToMongoDb configuration.MongoDbUrl configuration.MongoDbName
 let tradeListingsCollection =
     db |> Db.TradeListings.getCollection |> Async.RunSynchronously
 
-printfn "Exchange rate: %f" exchangeRate
 
 let getWsEventStream (url: string) =
     let client = new WebsocketClient(Uri(url))
@@ -209,6 +213,12 @@ timer.Elapsed.Add(fun _ ->
         printfn "Failed to refresh materialized views: %A" e)
 
 timer.Start()
+
+let exchangeRateTimer = new Timers.Timer(TimeSpan.FromMinutes 15.)
+exchangeRateTimer.AutoReset <- true
+
+exchangeRateTimer.Elapsed.Add(fun _ -> exchangeRate <- getExchangeRate ())
+exchangeRateTimer.Start()
 
 let exitEvent = new ManualResetEvent(false)
 exitEvent.WaitOne() |> ignore
