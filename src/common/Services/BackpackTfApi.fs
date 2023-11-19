@@ -36,12 +36,15 @@ module BackpackTfApi =
 
             let json = JsonSerializer.Deserialize<SnapshotResponse>(response, jsonOptions)
 
-            let cheapestBuyListing =
+            let medianPrice =
                 json.listings
                 |> List.filter (fun x -> Option.isSome (x.userAgent))
-                |> List.minBy (fun x -> x.price)
+                // median price
+                |> List.groupBy (fun x -> x.price)
+                |> List.minBy (fun (_, listings) -> listings |> List.length)
+                |> fst
 
-            return cheapestBuyListing.price / 1.0<keys>
+            return medianPrice / 1.0<keys>
         }
         |> Async.StartAsTask
 
