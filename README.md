@@ -21,6 +21,12 @@ Environment variables:
 | MongoDbName      | The name of the mongo database        | backpack-tf-replica       |
 | BackpackTfCookie | The cookie from a backpack.tf session | **REQUIRED**              |
 
+The following collections are aggregated in the provided mongo database:
+
+- `trade-listings` - replica of the backpack.tf listings database, with some information filtered out.
+- `tf-prices` - materialized views of best buy and sell prices for each item
+- `tf-bots-prices` - materialized views of the best buy and sell prices for each item, taking in account only bot listings
+
 ### API
 
 This services provides a gRPC and a REST API to query for item prices or listings. This CRUD service is an extension to the processing service and requires connecting it to the same database.
