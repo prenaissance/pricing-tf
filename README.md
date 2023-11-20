@@ -112,3 +112,10 @@ message KeyExchangeRate {
 
 1. Change needed env variables in `docker-compose.prod.yml`
 2. Run `docker compose -f=docker-compose.yml -f=docker-compose.prod.yml up -d --build`
+
+## TODO:
+
+- [ ] Add Rest API, probably using grpc json transcoding
+- [ ] Add generic unusual items in price aggregations
+- [ ] Fix edge cases in which very seldomly the events cannot be deserialized
+- [ ] Integrate some statistical analysis for the pricing formulas
