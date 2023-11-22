@@ -14,7 +14,7 @@ module Db =
         database
 
     module TradeListings =
-        open PricingTf.Common.Models
+        open MongoDB.Driver
         open MongoDB.Bson
         open System
         open PricingTf.Common.Configuration
@@ -40,25 +40,40 @@ module Db =
 
             CreateIndexModel(indexKey, options)
 
-        let private bumpedAtIndexModel =
+        let private getBumpedAtIndex listingsTtlHours =
             // ttl index
             let indexKey = IndexKeysDefinitionBuilder<TradeListing>().Ascending("bumpedAt")
 
             let options = new CreateIndexOptions()
-            options.ExpireAfter <- TimeSpan.FromDays(1.)
+            options.ExpireAfter <- TimeSpan.FromHours(listingsTtlHours)
 
             CreateIndexModel(indexKey, options)
 
-        let private indices =
-            [ nameIndexModel
-              nameAndIntentIndexModel
-              listingIdIndexModel
-              bumpedAtIndexModel ]
-
-        let getCollection (database: IMongoDatabase) =
+        let getCollection listingsTtlHours (database: IMongoDatabase) =
             async {
                 let collection =
                     database.GetCollection<TradeListing>(PricingCollection.TradeListings)
+
+                // drop existing bumpedAt index if the ttl is different
+                let! existingIndexes = collection.Indexes.List().ToListAsync() |> Async.AwaitTask
+
+                let bumpedAtIndex =
+                    existingIndexes
+                    |> Seq.tryFind (fun x -> x.GetElement("name").Value.AsString = "bumpedAt_1")
+
+                match bumpedAtIndex with
+                | Some index ->
+                    let ttlHours = index.GetElement("expireAfterSeconds").Value.AsInt32 / 3600
+
+                    if ttlHours <> listingsTtlHours then
+                        do! collection.Indexes.DropOneAsync("bumpedAt_1") |> Async.AwaitTask |> Async.Ignore
+                | None -> ()
+
+                let indices =
+                    [ nameIndexModel
+                      nameAndIntentIndexModel
+                      listingIdIndexModel
+                      getBumpedAtIndex listingsTtlHours ]
 
                 do! collection.Indexes.CreateManyAsync(indices) |> Async.AwaitTask |> Async.Ignore
 

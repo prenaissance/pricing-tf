@@ -85,7 +85,8 @@ let getExamplePricingEvent () =
 type Config =
     { MongoDbUrl: string
       MongoDbName: string
-      BackpackTfCookie: string }
+      BackpackTfCookie: string
+      ListingsTtlHours: int }
 
 let configuration =
     let builder = ConfigurationBuilder()
@@ -101,7 +102,12 @@ let configuration =
 
     { config with
         MongoDbUrl = config.MongoDbUrl |> StringUtils.defaultIfEmpty "mongodb://localhost:27017"
-        MongoDbName = config.MongoDbName |> StringUtils.defaultIfEmpty "backpack-tf-replica" }
+        MongoDbName = config.MongoDbName |> StringUtils.defaultIfEmpty "backpack-tf-replica"
+        ListingsTtlHours =
+            if config.ListingsTtlHours > 0 then
+                config.ListingsTtlHours
+            else
+                6 }
 
 [<Literal>]
 let wsUrl = "wss://ws.backpack.tf/events"
@@ -117,7 +123,9 @@ let db = Db.connectToMongoDb configuration.MongoDbUrl configuration.MongoDbName
 
 
 let tradeListingsCollection =
-    db |> Db.TradeListings.getCollection |> Async.RunSynchronously
+    db
+    |> Db.TradeListings.getCollection configuration.ListingsTtlHours
+    |> Async.RunSynchronously
 
 
 let getWsEventStream (url: string) =

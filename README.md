@@ -20,6 +20,7 @@ Environment variables:
 | MongoDbUrl       | The url of the mongo database         | mongodb://localhost:27017 |
 | MongoDbName      | The name of the mongo database        | backpack-tf-replica       |
 | BackpackTfCookie | The cookie from a backpack.tf session | **REQUIRED**              |
+| ListingsTtlHours | How long to keep stale listings in db | 6                         |
 
 The following collections are aggregated in the provided mongo database:
 
