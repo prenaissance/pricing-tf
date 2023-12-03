@@ -117,6 +117,6 @@ message KeyExchangeRate {
 ## TODO:
 
 - [ ] Add Rest API, probably using grpc json transcoding
-- [ ] Add generic unusual items in price aggregations
+- [x] Add generic unusual items in price aggregations
 - [ ] Fix edge cases in which very seldomly the events cannot be deserialized
 - [ ] Integrate some statistical analysis for the pricing formulas
