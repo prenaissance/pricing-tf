@@ -96,6 +96,8 @@ module Db =
                             .Set((fun x -> x.price), x.price)
                             .Set((fun x -> x.description), x.description)
                             .SetOnInsert((fun x -> x.itemName), x.itemName)
+                            .SetOnInsert((fun x -> x.marketName), x.marketName)
+                            .SetOnInsert((fun x -> x.quality), x.quality)
                             .SetOnInsert((fun x -> x.intent), x.intent)
                             .SetOnInsert((fun x -> x.isAutomatic), x.isAutomatic)
                             .SetOnInsert((fun x -> x.tradeDetails), x.tradeDetails)

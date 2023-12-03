@@ -16,6 +16,48 @@ module TfPrices =
 }"""
 
     [<Literal>]
+    let private matchUnusualsStage =
+        """
+{
+  $match: {
+    item: {
+      quality: "Unusual",
+    },
+  },
+}"""
+
+    [<Literal>]
+    let private groupUnusualsStage =
+        """
+{
+  $group: {
+    _id: "$marketName",
+    buyListings: {
+      $push: {
+        $cond: {
+          if: {
+            $eq: ["$intent", "buy"],
+          },
+          then: "$$ROOT",
+          else: null,
+        },
+      },
+    },
+    sellListings: {
+      $push: {
+        $cond: {
+          if: {
+            $eq: ["$intent", "sell"],
+          },
+          then: "$$ROOT",
+          else: null,
+        },
+      },
+    },
+  },
+}"""
+
+    [<Literal>]
     let private groupStage =
         """
 {
@@ -228,6 +270,19 @@ module TfPrices =
             }"""
             viewName
 
+    let private getMergeOutputViewStage viewName =
+        sprintf
+            """
+            {
+              $merge: {
+                into: "%s",
+                on: "_id",
+                whenMatched: "replace",
+                whenNotMatched: "insert",
+              },
+            }"""
+            viewName
+
     let refreshPricesView (collection: IMongoCollection<TradeListing>) =
         let pipeline =
             EmptyPipelineDefinition<TradeListing>()
@@ -238,11 +293,28 @@ module TfPrices =
                 .AppendStage(projectFinalDataStage)
                 .AppendStage(getOutputViewStage PricingCollection.PricesView)
 
+        let unusualsPipeline =
+            EmptyPipelineDefinition<TradeListing>()
+                .AppendStage(matchUnusualsStage)
+                .AppendStage(groupUnusualsStage)
+                .AppendStage(projectFilteredListingsStage)
+                .AppendStage(addPricesFieldsStage)
+                .AppendStage(projectFinalListingStage)
+                .AppendStage(projectFinalDataStage)
+                .AppendStage(getMergeOutputViewStage PricingCollection.PricesView)
+
         let options = AggregateOptions()
         options.AllowDiskUse <- true
 
-        collection.AggregateToCollectionAsync(pipeline, options = options)
-        |> Async.AwaitTask
+        async {
+            do!
+                collection.AggregateToCollectionAsync(pipeline, options = options)
+                |> Async.AwaitTask
+
+            do!
+                collection.AggregateToCollectionAsync(unusualsPipeline, options = options)
+                |> Async.AwaitTask
+        }
 
     let refreshBotsPricesView (collection: IMongoCollection<TradeListing>) =
         let pipeline =
@@ -254,6 +326,17 @@ module TfPrices =
                 .AppendStage(projectFinalListingStage)
                 .AppendStage(projectFinalDataStage)
                 .AppendStage(getOutputViewStage PricingCollection.BotPricesView)
+
+        let unusualsPipeline =
+            EmptyPipelineDefinition<TradeListing>()
+                .AppendStage(filterOutHumanListingsStage)
+                .AppendStage(matchUnusualsStage)
+                .AppendStage(groupUnusualsStage)
+                .AppendStage(projectFilteredListingsStage)
+                .AppendStage(addPricesFieldsStage)
+                .AppendStage(projectFinalListingStage)
+                .AppendStage(projectFinalDataStage)
+                .AppendStage(getMergeOutputViewStage PricingCollection.BotPricesView)
 
         let options = AggregateOptions()
         options.AllowDiskUse <- true

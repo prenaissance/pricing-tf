@@ -29,6 +29,8 @@ module Etl =
 
     let mapToListing exchangeRate payload =
         { itemName = payload.item.name
+          marketName = payload.item.marketName
+          quality = payload.item.quality.name
           price = Tf2Currency.fromMixed payload.currencies.metal payload.currencies.keys exchangeRate
           description = payload.details |> Option.defaultValue ""
           intent = payload.intent

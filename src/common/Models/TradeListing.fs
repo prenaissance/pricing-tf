@@ -31,7 +31,9 @@ type ListingIntent =
 type TradeListing =
     { [<DefaultValue>]
       id: ObjectId
+      quality: string
       itemName: string
+      marketName: string
       description: string
       intent: ListingIntent
       price: Tf2Currency
