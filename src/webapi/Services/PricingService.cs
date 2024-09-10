@@ -10,7 +10,7 @@ using PricingTf.WebApi.Models.PricedItem;
 
 namespace PricingTf.WebApi.Services;
 
-public class PricingService : Pricing.PricingBase
+public class PricingService : WebApi.PricingService.PricingServiceBase
 {
     private readonly ILogger<PricingService> _logger;
     private readonly IMongoCollection<PricedItem> _pricesCollection;
@@ -29,7 +29,7 @@ public class PricingService : Pricing.PricingBase
 
     public override async Task<ItemPricing> GetPricing(ItemRequest request, ServerCallContext context)
     {
-        var item = await _pricesCollection.Find(x => x.Id == request.Name).FirstOrDefaultAsync()
+        var item = await _pricesCollection.Find(x => x.Id == request.Name).FirstOrDefaultAsync(context.CancellationToken)
             ?? throw new RpcException(new Status(StatusCode.NotFound, $"Item {request.Name} not found"));
 
         return ItemPricing.FromPricedItem(item);
@@ -37,13 +37,13 @@ public class PricingService : Pricing.PricingBase
 
     public override async Task<ItemPricing> GetBotPricing(ItemRequest request, ServerCallContext context)
     {
-        var item = await _botPricesCollection.Find(x => x.Id == request.Name).FirstOrDefaultAsync()
+        var item = await _botPricesCollection.Find(x => x.Id == request.Name).FirstOrDefaultAsync(context.CancellationToken)
             ?? throw new RpcException(new Status(StatusCode.NotFound, $"Item {request.Name} not found"));
 
         return ItemPricing.FromPricedItem(item);
     }
 
-    private async Task<KeyExchangeRate?> GetExchangeFromListings()
+    private async Task<KeyExchangeRate?> GetExchangeFromListings(CancellationToken cancellationToken = default)
     {
         var builder = Builders<TradeListing>.Filter;
         var listings = await _tradeListingsCollection
@@ -52,7 +52,7 @@ public class PricingService : Pricing.PricingBase
                 builder.Gte("bumpedAt", DateTime.UtcNow.AddHours(-1)),
                 builder.Eq("isAutomatic", true),
                 builder.Eq("intent", "sell")
-            )).ToListAsync();
+            )).ToListAsync(cancellationToken);
 
         var listing = listings.MinBy(x => x.price.metal);
         if (listing is null)
@@ -71,7 +71,7 @@ public class PricingService : Pricing.PricingBase
 
     public override async Task<KeyExchangeRate> GetKeyExchangeRate(Empty request, ServerCallContext context)
     {
-        var listingPrice = await GetExchangeFromListings();
+        var listingPrice = await GetExchangeFromListings(context.CancellationToken);
         if (listingPrice is not null)
         {
             return listingPrice;
@@ -91,5 +91,26 @@ public class PricingService : Pricing.PricingBase
             UpdatedAt = Timestamp.FromDateTime(DateTime.UtcNow),
             Source = KeyExchangeSource.Snapshot
         };
+    }
+
+    private static FilterDefinition<PricedItem> GetUpdatedSinceFilter(AllPricingRequest request)
+    {
+        if (!request.HasUpdatedSinceSeconds)
+        {
+            return FilterDefinition<PricedItem>.Empty;
+        }
+
+        var builder = Builders<PricedItem>.Filter;
+        return builder.Gte("updatedAt", DateTime.UtcNow.AddSeconds(-request.UpdatedSinceSeconds));
+    }
+
+    public override Task GetAllBotPricings(AllPricingRequest request, IServerStreamWriter<ItemPricing> responseStream, ServerCallContext context)
+    {
+        var filter = GetUpdatedSinceFilter(request);
+        var cursor = _botPricesCollection.Find(filter).ToCursor();
+        return cursor.ForEachAsync(async item =>
+        {
+            await responseStream.WriteAsync(ItemPricing.FromPricedItem(item));
+        }, context.CancellationToken);
     }
 }
