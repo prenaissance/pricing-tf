@@ -46,6 +46,8 @@ Environment variables:
 
 Contracts:
 
+[pricingTf.proto](src/webapi/Protos/pricingTf.proto)
+
 ```protobuf
 syntax = "proto3";
 
@@ -55,10 +57,11 @@ import "google/protobuf/empty.proto";
 
 package pricingTf;
 
-service Pricing {
+service PricingService {
   rpc GetPricing (ItemRequest) returns (ItemPricing);
   rpc GetBotPricing (ItemRequest) returns (ItemPricing);
   rpc GetKeyExchangeRate (google.protobuf.Empty) returns (KeyExchangeRate);
+  rpc GetAllBotPricings (AllPricingRequest) returns (stream ItemPricing);
 }
 
 message ItemRequest {
@@ -67,19 +70,19 @@ message ItemRequest {
 
 message TradeDetails {
   string listingId = 1;
-  string tradeOfferUrl = 2;
+  string trade_offer_url = 2;
 }
 
 message PricingDetails {
   double price = 1;
-  TradeDetails tradeDetails = 2;
+  TradeDetails trade_details = 2;
 }
 
 message ItemPricing {
   string name = 1;
   optional PricingDetails buy = 2;
   optional PricingDetails sell = 3;
-  google.protobuf.Timestamp updatedAt = 4;
+  google.protobuf.Timestamp updated_at = 4;
 }
 
 enum KeyExchangeSource {
@@ -89,8 +92,12 @@ enum KeyExchangeSource {
 
 message KeyExchangeRate {
   double metal = 1;
-  google.protobuf.Timestamp updatedAt = 2;
+  google.protobuf.Timestamp updated_at = 2;
   KeyExchangeSource source = 3;
+}
+
+message AllPricingRequest {
+  optional uint32 updated_since_seconds = 1;
 }
 ```
 
