@@ -1,14 +1,8 @@
 on:
-  push:
-    branches:
-      - master
-    paths:
-      - "src/webapi/**"
-      - "src/common/**"
-      - ".github/workflows/webapi-docker.yml"
+  release:
+    types: [published]
 
 env:
-  IMAGE_VERSION: "1"
   IMAGE_TAG: "${{ github.sha }}"
   IMAGE_NAME: prenaissance/pricing-tf-webapi
   TARGET_PLAFORMS: linux/amd64,linux/arm64
@@ -18,6 +12,14 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+      - name: Get the version
+        id: get_version
+        run: |
+          echo "Version from release: ${{ github.event.release.tag_name }}"
+          # Extract the major, major.minor, and full version, excluding the 'v' prefix
+          echo "MAJOR_VERSION=$(echo ${{ github.event.release.tag_name }} | cut -d. -f1 | sed 's/v//')" >> $GITHUB_ENV
+          echo "MAJOR_MINOR_VERSION=$(echo ${{ github.event.release.tag_name }} | cut -d. -f2 | sed 's/v//')" >> $GITHUB_ENV
+          echo "VERSION=$(echo ${{ github.event.release.tag_name }} | sed 's/v//')" >> $GITHUB_ENV
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
       - name: Login to Docker Hub
@@ -33,6 +35,8 @@ jobs:
           push: true
           platforms: ${{ env.TARGET_PLAFORMS }}
           tags: |
-            ${{ env.IMAGE_NAME }}:${{ env.IMAGE_VERSION }}
+            ${{ env.IMAGE_NAME }}:${{ steps.get_version.outputs.VERSION }}
+            ${{ env.IMAGE_NAME }}:${{ steps.get_version.outputs.MAJOR_MINOR_VERSION }}
+            ${{ env.IMAGE_NAME }}:${{ steps.get_version.outputs.MAJOR_VERSION }}
             ${{ env.IMAGE_NAME }}:${{ env.IMAGE_TAG }}
             ${{ env.IMAGE_NAME }}:latest
