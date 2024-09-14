@@ -18,7 +18,7 @@ message ItemRequest {
 }
 
 message TradeDetails {
-  string listingId = 1;
+  string listing_id = 1;
   string trade_offer_url = 2;
 }
 
