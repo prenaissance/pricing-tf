@@ -9,7 +9,7 @@ module Etl =
     let private spelledRegex =
         Regex(
             @"spell|pumpkin|exo|𝐄𝐗𝐎?|𝐏𝐔𝐌𝐏𝐊𝐈𝐍|𝐇𝐅|𝐄𝐱𝐨𝐫𝐜𝐢𝐬𝐦|𝐏𝐁|ꜱᴘᴇʟʟ|𝗦𝗣𝗘𝗟𝗟|𝐒𝐩𝐞𝐥𝐥|𝐒𝐏𝐄𝐋𝐋",
-            RegexOptions.Compiled
+            RegexOptions.Compiled ||| RegexOptions.IgnoreCase
         )
 
     let filterSpelledEvents events =
