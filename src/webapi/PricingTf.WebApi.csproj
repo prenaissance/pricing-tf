@@ -12,6 +12,7 @@
 
   <ItemGroup>
     <PackageReference Include="Grpc.AspNetCore" Version="2.57.0" />
+    <PackageReference Include="Grpc.AspNetCore.HealthChecks" Version="2.65.0" />
     <PackageReference Include="Grpc.AspNetCore.Server.Reflection" Version="2.65.0" />
     <PackageReference Include="Microsoft.AspNetCore.Grpc.JsonTranscoding" Version="8.0.0" />
     <PackageReference Include="Microsoft.AspNetCore.Grpc.Swagger" Version="0.8.0" />
@@ -19,7 +20,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\common\PricingTf.Common.fsproj" />
+    <ProjectReference Include="../common/PricingTf.Common.fsproj" />
   </ItemGroup>
 
 </Project>
