@@ -2,7 +2,6 @@ namespace PricingTf.Processing.Workers
 
 module TfPrices =
     open MongoDB.Driver
-    open MongoDB.Bson
     open PricingTf.Common.Models
     open PricingTf.Common.Configuration
 
