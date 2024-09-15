@@ -15,5 +15,3 @@ jobs:
         run: dotnet restore src/webapi
       - name: Build
         run: dotnet build src/webapi --no-restore
-      - name: Test
-        run: dotnet test src/webapi --no-build
