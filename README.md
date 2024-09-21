@@ -54,6 +54,7 @@ syntax = "proto3";
 option csharp_namespace = "PricingTf.WebApi";
 import "google/protobuf/timestamp.proto";
 import "google/protobuf/empty.proto";
+import "google/protobuf/wrappers.proto";
 
 package pricingTf;
 
@@ -70,7 +71,7 @@ message ItemRequest {
 
 message TradeDetails {
   string listing_id = 1;
-  optional string trade_offer_url = 2;
+  google.protobuf.StringValue trade_offer_url = 2;
 }
 
 message PricingDetails {
