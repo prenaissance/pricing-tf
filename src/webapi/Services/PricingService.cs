@@ -113,4 +113,15 @@ public class PricingService : WebApi.PricingService.PricingServiceBase
             await responseStream.WriteAsync(ItemPricing.FromPricedItem(item));
         }, context.CancellationToken);
     }
+
+    public override async Task<DeleteBotPricingResponse> DeleteBotPricing(DeleteBotPricingRequest request, ServerCallContext context)
+    {
+        var result = await _botPricesCollection.DeleteOneAsync(x => x.Id == request.Name);
+        if (result?.DeletedCount == 0)
+        {
+            throw new RpcException(new Status(StatusCode.NotFound, $"Item {request.Name} not found"));
+        }
+
+        return new DeleteBotPricingResponse();
+    }
 }
