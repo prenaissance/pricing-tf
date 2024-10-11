@@ -11,6 +11,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <PackageReference Include="dotnet-etcd" Version="7.1.1" />
     <PackageReference Include="Grpc.AspNetCore" Version="2.57.0" />
     <PackageReference Include="Grpc.AspNetCore.HealthChecks" Version="2.65.0" />
     <PackageReference Include="Grpc.AspNetCore.Server.Reflection" Version="2.65.0" />
