@@ -1,11 +1,13 @@
-FROM mcr.microsoft.com/dotnet/sdk:8.0 AS build
+
+FROM --platform=$BUILDPLATFORM mcr.microsoft.com/dotnet/sdk:8.0 AS build
+ARG TARGETARCH
 
 COPY /src/processing/PricingTf.Processing.fsproj /src/processing/
 COPY /src/common/PricingTf.Common.fsproj /src/common/
 RUN dotnet restore ./src/processing/PricingTf.Processing.fsproj
 COPY /src/processing/ /src/processing/
 COPY /src/common/ /src/common/
-RUN dotnet publish src/processing -c Release -o out
+RUN dotnet publish src/processing -c Release -o out --arch ${TARGETARCH}
 
 # Build runtime image
 FROM mcr.microsoft.com/dotnet/runtime:8.0
