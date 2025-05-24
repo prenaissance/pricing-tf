@@ -37,6 +37,8 @@ type TradeListing =
       description: string
       intent: ListingIntent
       price: Tf2Currency
+      priceMetal: Metal
+      priceKeys: Keys
       bumpedAt: DateTime
       isAutomatic: bool
       tradeDetails: TradeDetails }

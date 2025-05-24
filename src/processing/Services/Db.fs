@@ -94,6 +94,8 @@ module Db =
                             .SetOnInsert((fun x -> x.id), ObjectId.GenerateNewId())
                             .Set((fun x -> x.bumpedAt), x.bumpedAt)
                             .Set((fun x -> x.price), x.price)
+                            .Set((fun x -> x.priceMetal), x.priceMetal)
+                            .Set((fun x -> x.priceKeys), x.priceKeys)
                             .Set((fun x -> x.description), x.description)
                             .SetOnInsert((fun x -> x.itemName), x.itemName)
                             .SetOnInsert((fun x -> x.marketName), x.marketName)
