@@ -9,8 +9,10 @@ public sealed partial class ItemPricing
         new()
         {
             Name = pricedItem.Name,
-            Buy = pricedItem.Buy,
-            Sell = pricedItem.Sell,
+            Buy = pricedItem.BuyListing,
+            BuyListings = { pricedItem.BuyListings },
+            Sell = pricedItem.SellListing,
+            SellListings = { pricedItem.SellListings },
             UpdatedAt = Timestamp.FromDateTime(pricedItem.UpdatedAt)
         };
 }

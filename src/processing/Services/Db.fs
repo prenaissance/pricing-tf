@@ -14,22 +14,25 @@ module Db =
         database
 
     module TradeListings =
-        open MongoDB.Driver
         open MongoDB.Bson
         open System
         open PricingTf.Common.Configuration
 
+        let private automaticIndexModel =
+            let indexKey = IndexKeysDefinitionBuilder<TradeListing>().Ascending("isAutomatic")
+            CreateIndexModel indexKey
+
         let private nameIndexModel =
-            let indexKey = IndexKeysDefinitionBuilder<TradeListing>().Hashed("listingName")
-            CreateIndexModel(indexKey)
+            let indexKey = IndexKeysDefinitionBuilder<TradeListing>().Ascending("itemName")
+            CreateIndexModel indexKey
 
         let private nameAndIntentIndexModel =
             let indexKey =
                 IndexKeysDefinitionBuilder<TradeListing>()
-                    .Ascending("listingName")
-                    .Hashed("intent")
+                    .Ascending("itemName")
+                    .Ascending("intent")
 
-            CreateIndexModel(indexKey)
+            CreateIndexModel indexKey
 
         let private listingIdIndexModel =
             let indexKey =
@@ -45,14 +48,14 @@ module Db =
             let indexKey = IndexKeysDefinitionBuilder<TradeListing>().Ascending("bumpedAt")
 
             let options = new CreateIndexOptions()
-            options.ExpireAfter <- TimeSpan.FromHours(listingsTtlHours)
+            options.ExpireAfter <- TimeSpan.FromHours listingsTtlHours
 
             CreateIndexModel(indexKey, options)
 
         let getCollection listingsTtlHours (database: IMongoDatabase) =
             async {
                 let collection =
-                    database.GetCollection<TradeListing>(PricingCollection.TradeListings)
+                    database.GetCollection<TradeListing> PricingCollection.TradeListings
 
                 // drop existing bumpedAt index if the ttl is different
                 let! existingIndexes = collection.Indexes.List().ToListAsync() |> Async.AwaitTask
@@ -66,16 +69,17 @@ module Db =
                     let ttlHours = index.GetElement("expireAfterSeconds").Value.AsInt32 / 3600
 
                     if ttlHours <> listingsTtlHours then
-                        do! collection.Indexes.DropOneAsync("bumpedAt_1") |> Async.AwaitTask |> Async.Ignore
+                        do! collection.Indexes.DropOneAsync "bumpedAt_1" |> Async.AwaitTask |> Async.Ignore
                 | None -> ()
 
                 let indices =
-                    [ nameIndexModel
+                    [ automaticIndexModel
+                      nameIndexModel
                       nameAndIntentIndexModel
                       listingIdIndexModel
                       getBumpedAtIndex listingsTtlHours ]
 
-                do! collection.Indexes.CreateManyAsync(indices) |> Async.AwaitTask |> Async.Ignore
+                do! collection.Indexes.CreateManyAsync indices |> Async.AwaitTask |> Async.Ignore
 
                 return collection
             }
@@ -118,4 +122,4 @@ module Db =
                 Builders<TradeListing>.Filter
                     .In((fun x -> x.tradeDetails.listingId), listingIds)
 
-            collection.DeleteManyAsync(filter) |> Async.AwaitTask
+            collection.DeleteManyAsync filter |> Async.AwaitTask

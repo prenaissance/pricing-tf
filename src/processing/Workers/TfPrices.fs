@@ -114,151 +114,79 @@ module TfPrices =
 }"""
 
     [<Literal>]
-    let private addPricesFieldsStage =
+    let private sortPricesStage =
         """
 {
   $addFields: {
-    minBuyPrice: {
-      $ifNull: [
-        {
-          $min: "$sellListings.price.keys",
-        },
-        9999,
-      ],
+    buyListings: {
+      $sortArray: {
+        input: "$buyListings",
+        sortBy: {
+          priceKeys: -1,
+          bumpedAt: -1
+        }
+      }
     },
-    maxSellPrice: {
-      $ifNull: [
-        {
-          $max: "$buyListings.price.keys",
-        },
-        0,
-      ],
-    },
-  },
+    sellListings: {
+      $sortArray: {
+        input: "$sellListings",
+        sortBy: {
+          priceKeys: 1,
+          bumpedAt: -1
+        }
+      }
+    }
+  }
 }"""
 
     [<Literal>]
     let private projectFinalListingStage =
         """
 {
-  $project: {
+  $addFields: {
+    name: "$_id",
     buyListing: {
-      $cond: {
-        if: {
-          $and: [
-            {
-              $ne: ["$minBuyPrice", 9999],
-            },
-            {
-              $ne: ["$sellListings", []],
-            },
-          ],
-        },
-        then: {
-          $arrayElemAt: [
-            {
-              $filter: {
-                input: "$sellListings",
-                as: "listing",
-                cond: {
-                  $and: [
-                    {
-                      $ne: ["$$listing", null],
-                    },
-                    {
-                      $eq: [
-                        "$$listing.price.keys",
-                        "$minBuyPrice",
-                      ],
-                    },
-                  ],
-                },
-              },
-            },
-            0,
-          ],
-        },
-        else: null,
-      },
+      $ifNull: [
+        { $arrayElemAt: ["$buyListings", 0] },
+        null
+      ]
     },
     sellListing: {
-      $cond: {
-        if: {
-          $and: [
-            {
-              $ne: ["$maxSellPrice", 0],
-            },
-            {
-              $ne: ["$buyListings", []],
-            },
-          ],
-        },
-        then: {
-          $arrayElemAt: [
-            {
-              $filter: {
-                input: "$buyListings",
-                as: "listing",
-                cond: {
-                  $and: [
-                    {
-                      $ne: ["$$listing", null],
-                    },
-                    {
-                      $eq: [
-                        "$$listing.price.keys",
-                        "$maxSellPrice",
-                      ],
-                    },
-                  ],
-                },
-              },
-            },
-            0,
-          ],
-        },
-        else: null,
-      },
-    },
-  },
+      $ifNull: [
+        { $arrayElemAt: ["$sellListings", 0] },
+        null
+      ]
+    }
+  }
 }"""
 
     [<Literal>]
-    let private projectFinalDataStage =
+    let private pickListingFieldsStage =
         """
 {
   $project: {
-    name: "$_id",
-    buy: {
-      $cond: {
-        if: {
-          $eq: ["$buyListing", null],
-        },
-        then: null,
-        else: {
-          price: "$buyListing.price.keys",
-          tradeDetails:
-            "$buyListing.tradeDetails",
-        },
-      },
-    },
-    sell: {
-      $cond: {
-        if: {
-          $eq: ["$sellListing", null],
-        },
-        then: null,
-        else: {
-          price: "$sellListing.price.keys",
-          tradeDetails:
-            "$sellListing.tradeDetails",
-        },
-      },
-    },
+    _id: 0,
+    itemName: 1,
+    intent: 1,
+    price: 1,
+    priceKeys: 1,
+    priceMetal: 1,
+    bumpedAt: 1,
+  }
+}"""
+
+    [<Literal>]
+    let private updatedAtStage =
+        """
+{
+  $addFields: {
     updatedAt: {
-      $min: ["$sellListing.bumpedAt", "$buyListing.bumpedAt"]
+      $min: [
+        "$sellListing.bumpedAt",
+        "$buyListing.bumpedAt"
+      ]
     }
-  },
+  }
 }"""
 
     let private getOutputViewStage viewName =
@@ -286,20 +214,22 @@ module TfPrices =
         let pipeline =
             EmptyPipelineDefinition<TradeListing>()
                 .AppendStage(groupStage)
+                .AppendStage(pickListingFieldsStage)
                 .AppendStage(projectFilteredListingsStage)
-                .AppendStage(addPricesFieldsStage)
+                .AppendStage(sortPricesStage)
                 .AppendStage(projectFinalListingStage)
-                .AppendStage(projectFinalDataStage)
+                .AppendStage(updatedAtStage)
                 .AppendStage(getOutputViewStage PricingCollection.PricesView)
 
         let unusualsPipeline =
             EmptyPipelineDefinition<TradeListing>()
                 .AppendStage(matchUnusualsStage)
+                .AppendStage(pickListingFieldsStage)
                 .AppendStage(groupUnusualsStage)
                 .AppendStage(projectFilteredListingsStage)
-                .AppendStage(addPricesFieldsStage)
+                .AppendStage(sortPricesStage)
                 .AppendStage(projectFinalListingStage)
-                .AppendStage(projectFinalDataStage)
+                .AppendStage(updatedAtStage)
                 .AppendStage(getMergeOutputViewStage PricingCollection.PricesView)
 
         let options = AggregateOptions()
@@ -319,22 +249,24 @@ module TfPrices =
         let pipeline =
             EmptyPipelineDefinition<TradeListing>()
                 .AppendStage(filterOutHumanListingsStage)
+                .AppendStage(pickListingFieldsStage)
                 .AppendStage(groupStage)
                 .AppendStage(projectFilteredListingsStage)
-                .AppendStage(addPricesFieldsStage)
+                .AppendStage(sortPricesStage)
                 .AppendStage(projectFinalListingStage)
-                .AppendStage(projectFinalDataStage)
+                .AppendStage(updatedAtStage)
                 .AppendStage(getOutputViewStage PricingCollection.BotPricesView)
 
         let unusualsPipeline =
             EmptyPipelineDefinition<TradeListing>()
                 .AppendStage(filterOutHumanListingsStage)
+                .AppendStage(pickListingFieldsStage)
                 .AppendStage(matchUnusualsStage)
                 .AppendStage(groupUnusualsStage)
                 .AppendStage(projectFilteredListingsStage)
-                .AppendStage(addPricesFieldsStage)
+                .AppendStage(sortPricesStage)
                 .AppendStage(projectFinalListingStage)
-                .AppendStage(projectFinalDataStage)
+                .AppendStage(updatedAtStage)
                 .AppendStage(getMergeOutputViewStage PricingCollection.BotPricesView)
 
         let options = AggregateOptions()
