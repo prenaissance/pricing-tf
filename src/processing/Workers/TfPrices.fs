@@ -171,6 +171,7 @@ module TfPrices =
     price: 1,
     priceKeys: 1,
     priceMetal: 1,
+    tradeDetails: 1,
     bumpedAt: 1,
   }
 }"""

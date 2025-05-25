@@ -7,10 +7,11 @@ using PricingTf.Common.Models;
 using PricingTf.Processing.Services;
 using PricingTf.WebApi.Configuration;
 using PricingTf.WebApi.Models.PricedItem;
+using PricingTf.WebApi.Protos;
 
 namespace PricingTf.WebApi.Services;
 
-public class PricingService : WebApi.PricingService.PricingServiceBase
+public class PricingService : Protos.PricingService.PricingServiceBase
 {
     private readonly ILogger<PricingService> _logger;
     private readonly IMongoCollection<PricedItem> _pricesCollection;
