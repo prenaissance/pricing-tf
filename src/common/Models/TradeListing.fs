@@ -15,7 +15,7 @@ type ListingIntent =
         match value with
         | "buy" -> Buy
         | "sell" -> Sell
-        | _ -> raise <| ArgumentException("Invalid listing intent")
+        | _ -> raise <| ArgumentException "Invalid listing intent"
 
     override this.ToString() =
         match this with

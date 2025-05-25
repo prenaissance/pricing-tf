@@ -9,5 +9,6 @@ public class ListingDetails
     public Tf2Currency Price { get; set; } = default!;
     public double PriceKeys { get; set; } = default!;
     public double PriceMetal { get; set; } = default!;
+    public TradeDetails? TradeDetails { get; set; } = default!;
     public DateTime BumpedAt { get; set; } = DateTime.UtcNow;
 }
