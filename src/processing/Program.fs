@@ -158,5 +158,5 @@ exchangeRateTimer.AutoReset <- true
 exchangeRateTimer.Elapsed.Add(fun _ -> exchangeRate <- getExchangeRate ())
 exchangeRateTimer.Start()
 
-let exitEvent = new ManualResetEvent(false)
+let exitEvent = new ManualResetEvent false
 exitEvent.WaitOne() |> ignore

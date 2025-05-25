@@ -14,14 +14,13 @@ type ExchangeRate = float<metal / keys>
 type Tf2Currency = { metal: Metal; keys: Keys }
 
 module Tf2Currency =
-    let fromKeys keys exchangeRate =
-        { metal = keys * exchangeRate
+    /// Provides both precalculated values
+    let from metal keys = 
+        { metal = metal
           keys = keys }
 
-    let fromMetal metal exchangeRate =
-        { metal = metal
-          keys = metal / exchangeRate }
+    let toMetal exchangeRate currency =
+        currency.metal + currency.keys * exchangeRate
 
-    let fromMixed metal keys (exchangeRate: ExchangeRate) =
-        { metal = metal + keys * exchangeRate
-          keys = keys + metal / exchangeRate }
+    let toKeys exchangeRate currency =
+        currency.keys + currency.metal / exchangeRate

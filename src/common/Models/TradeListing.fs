@@ -15,7 +15,7 @@ type ListingIntent =
         match value with
         | "buy" -> Buy
         | "sell" -> Sell
-        | _ -> raise <| ArgumentException("Invalid listing intent")
+        | _ -> raise <| ArgumentException "Invalid listing intent"
 
     override this.ToString() =
         match this with
@@ -37,6 +37,8 @@ type TradeListing =
       description: string
       intent: ListingIntent
       price: Tf2Currency
+      priceMetal: Metal
+      priceKeys: Keys
       bumpedAt: DateTime
       isAutomatic: bool
       tradeDetails: TradeDetails }

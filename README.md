@@ -51,7 +51,7 @@ Contracts:
 ```protobuf
 syntax = "proto3";
 
-option csharp_namespace = "PricingTf.WebApi";
+option csharp_namespace = "PricingTf.WebApi.Protos";
 import "google/protobuf/timestamp.proto";
 import "google/protobuf/empty.proto";
 import "google/protobuf/wrappers.proto";
@@ -61,12 +61,18 @@ package pricingTf;
 service PricingService {
   rpc GetPricing (ItemRequest) returns (ItemPricing);
   rpc GetBotPricing (ItemRequest) returns (ItemPricing);
-  rpc GetKeyExchangeRate (google.protobuf.Empty) returns (KeyExchangeRate);
-  rpc GetAllBotPricings (AllPricingRequest) returns (stream ItemPricing);
+  rpc DeleteBotPricing (DeleteBotPricingRequest) returns (DeleteBotPricingResponse);
+  rpc GetKeyExchangeRate (google.protobuf.Empty) returns (KeyExchangeRateResponse);
+  rpc GetAllBotPricings (GetAllBotPricingsRequest) returns (stream ItemPricing);
 }
 
 message ItemRequest {
   string name = 1;
+}
+
+message Tf2Currency {
+  double keys = 1;
+  double metal = 2;
 }
 
 message TradeDetails {
@@ -74,16 +80,22 @@ message TradeDetails {
   google.protobuf.StringValue trade_offer_url = 2;
 }
 
-message PricingDetails {
-  double price = 1;
+message ListingDetails {
+  // the original currencies specified in the listing
+  Tf2Currency price = 1;
   TradeDetails trade_details = 2;
+  google.protobuf.Timestamp bumped_at = 3;
+  double price_keys = 4;
+  double price_metal = 5;
 }
 
 message ItemPricing {
   string name = 1;
-  optional PricingDetails buy = 2;
-  optional PricingDetails sell = 3;
+  optional ListingDetails buy = 2;
+  optional ListingDetails sell = 3;
   google.protobuf.Timestamp updated_at = 4;
+  repeated ListingDetails buy_listings = 5;
+  repeated ListingDetails sell_listings = 6;
 }
 
 enum KeyExchangeSource {
@@ -91,14 +103,21 @@ enum KeyExchangeSource {
   Snapshot = 1;
 }
 
-message KeyExchangeRate {
+message KeyExchangeRateResponse {
   double metal = 1;
   google.protobuf.Timestamp updated_at = 2;
   KeyExchangeSource source = 3;
 }
 
-message AllPricingRequest {
+message GetAllBotPricingsRequest {
   optional uint32 updated_since_seconds = 1;
+}
+
+message DeleteBotPricingRequest {
+  string name = 1;
+}
+
+message DeleteBotPricingResponse {
 }
 ```
 

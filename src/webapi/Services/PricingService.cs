@@ -7,10 +7,11 @@ using PricingTf.Common.Models;
 using PricingTf.Processing.Services;
 using PricingTf.WebApi.Configuration;
 using PricingTf.WebApi.Models.PricedItem;
+using PricingTf.WebApi.Protos;
 
 namespace PricingTf.WebApi.Services;
 
-public class PricingService : WebApi.PricingService.PricingServiceBase
+public class PricingService : Protos.PricingService.PricingServiceBase
 {
     private readonly ILogger<PricingService> _logger;
     private readonly IMongoCollection<PricedItem> _pricesCollection;
@@ -43,7 +44,7 @@ public class PricingService : WebApi.PricingService.PricingServiceBase
         return ItemPricing.FromPricedItem(item);
     }
 
-    private async Task<KeyExchangeRate?> GetExchangeFromListings(CancellationToken cancellationToken = default)
+    private async Task<KeyExchangeRateResponse?> GetExchangeFromListings(CancellationToken cancellationToken = default)
     {
         var builder = Builders<TradeListing>.Filter;
         var listings = await _tradeListingsCollection
@@ -69,7 +70,7 @@ public class PricingService : WebApi.PricingService.PricingServiceBase
     }
 
 
-    public override async Task<KeyExchangeRate> GetKeyExchangeRate(Empty request, ServerCallContext context)
+    public override async Task<KeyExchangeRateResponse> GetKeyExchangeRate(Empty request, ServerCallContext context)
     {
         var listingPrice = await GetExchangeFromListings(context.CancellationToken);
         if (listingPrice is not null)
@@ -93,7 +94,7 @@ public class PricingService : WebApi.PricingService.PricingServiceBase
         };
     }
 
-    private static FilterDefinition<PricedItem> GetUpdatedSinceFilter(AllPricingRequest request)
+    private static FilterDefinition<PricedItem> GetUpdatedSinceFilter(GetAllBotPricingsRequest request)
     {
         if (!request.HasUpdatedSinceSeconds)
         {
@@ -104,7 +105,7 @@ public class PricingService : WebApi.PricingService.PricingServiceBase
         return builder.Gte("updatedAt", DateTime.UtcNow.AddSeconds(-request.UpdatedSinceSeconds));
     }
 
-    public override Task GetAllBotPricings(AllPricingRequest request, IServerStreamWriter<ItemPricing> responseStream, ServerCallContext context)
+    public override Task GetAllBotPricings(GetAllBotPricingsRequest request, IServerStreamWriter<ItemPricing> responseStream, ServerCallContext context)
     {
         var filter = GetUpdatedSinceFilter(request);
         var cursor = _botPricesCollection.Find(filter).ToCursor();
