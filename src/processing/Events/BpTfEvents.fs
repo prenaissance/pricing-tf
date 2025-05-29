@@ -93,6 +93,7 @@ type ItemListing =
       [<JsonPropertyName "class">]
       _class: string list
       slot: string
+      particle: Particle option
       tradable: bool
       craftable: bool
       sheen: Sheen option
