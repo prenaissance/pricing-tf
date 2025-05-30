@@ -32,8 +32,12 @@ module Etl =
           marketName = payload.item.marketName
           quality = payload.item.quality.name
           price = Tf2Currency.from payload.currencies.metal payload.currencies.keys
-          priceMetal = Tf2Currency.from payload.currencies.metal payload.currencies.keys |> Tf2Currency.toMetal exchangeRate
-          priceKeys = Tf2Currency.from payload.currencies.metal payload.currencies.keys |> Tf2Currency.toKeys exchangeRate
+          priceMetal =
+            Tf2Currency.from payload.currencies.metal payload.currencies.keys
+            |> Tf2Currency.toMetal exchangeRate
+          priceKeys =
+            Tf2Currency.from payload.currencies.metal payload.currencies.keys
+            |> Tf2Currency.toKeys exchangeRate
           description = payload.details |> Option.defaultValue ""
           intent = payload.intent
           bumpedAt =
@@ -43,7 +47,18 @@ module Etl =
           isAutomatic = Option.isSome payload.userAgent
           tradeDetails =
             { listingId = payload.id
-              tradeOfferUrl = payload.user.tradeOfferUrl } }
+              tradeOfferUrl = payload.user.tradeOfferUrl
+              description = payload.details |> Option.defaultValue ""
+              item =
+                { name = payload.item.name
+                  imageUrl = payload.item.imageUrl
+                  quality = payload.item.quality
+                  particle = payload.item.particle |> Option.defaultValue Unchecked.defaultof<ItemParticle> }
+              user =
+                { name = payload.user.name
+                  avatarThumbnailUrl = payload.user.avatar
+                  online = payload.user.online
+                  steamId = payload.steamid } } }
 
     let filterSpelled listings =
         listings |> List.filter (fun x -> not (spelledRegex.IsMatch x.description))

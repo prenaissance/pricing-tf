@@ -1,11 +1,47 @@
 namespace PricingTf.Common.Models
 
 open System
+open System.Text.Json.Serialization
 open MongoDB.Bson
+open MongoDB.Bson.Serialization.Attributes
+
+type ItemQuality =
+    { [<BsonId>]
+      id: int
+      name: string
+      color: string }
+
+[<CLIMutable>]
+type ItemParticle =
+
+    { [<BsonId>]
+      id: int
+      name: string
+      shortName: string
+      imageUrl: string
+      [<BsonElement "type">]
+      [<JsonPropertyName "type">]
+      _type: string }
+
+[<CLIMutable>]
+type TradeItemDetails =
+    { name: string
+      imageUrl: string
+      quality: ItemQuality
+      particle: ItemParticle }
+
+type TradeUserDetails =
+    { name: string
+      avatarThumbnailUrl: string
+      online: bool
+      steamId: string }
 
 type TradeDetails =
     { listingId: string
-      tradeOfferUrl: string }
+      tradeOfferUrl: string
+      description: string
+      item: TradeItemDetails
+      user: TradeUserDetails }
 
 type ListingIntent =
     | Buy

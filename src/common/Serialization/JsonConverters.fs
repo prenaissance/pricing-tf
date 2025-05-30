@@ -1,5 +1,6 @@
 namespace PricingTf.Common.Serialization
 
+open System
 open System.Text.Json
 open System.Text.Json.Serialization
 
@@ -18,3 +19,14 @@ type OptionConverter<'T>() =
         match value with
         | Some value -> JsonSerializer.Serialize(writer, value)
         | None -> writer.WriteNullValue()
+
+type OptionConverterFactory() =
+    inherit JsonConverterFactory()
+
+    override _.CanConvert(t: Type) =
+        t.IsGenericType && t.GetGenericTypeDefinition() = typedefof<option<_>>
+
+    override _.CreateConverter(typeToConvert: Type, options: JsonSerializerOptions) =
+        let innerType = typeToConvert.GetGenericArguments().[0]
+        let convType = typedefof<OptionConverter<_>>.MakeGenericType innerType
+        Activator.CreateInstance convType :?> JsonConverter

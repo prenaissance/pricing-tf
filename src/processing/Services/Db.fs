@@ -9,6 +9,8 @@ module Db =
     let connectToMongoDb (connectionString: string) dbName =
         BsonSerializer.RegisterSerializer(typeof<ListingIntent>, ListingIntentSerializer())
 
+        BsonSerializer.RegisterGenericSerializerDefinition(typedefof<option<_>>, typedefof<OptionSerializer<_>>)
+
         let client = new MongoClient(connectionString)
         let database = client.GetDatabase dbName
         database
@@ -48,7 +50,7 @@ module Db =
             let indexKey = IndexKeysDefinitionBuilder<TradeListing>().Ascending("bumpedAt")
 
             let options = new CreateIndexOptions()
-            options.ExpireAfter <- TimeSpan.FromHours listingsTtlHours
+            options.ExpireAfter <- TimeSpan.FromHours(int listingsTtlHours)
 
             CreateIndexModel(indexKey, options)
 
