@@ -75,9 +75,39 @@ message Tf2Currency {
   double metal = 2;
 }
 
+message ItemQuality {
+  int32 id = 1;
+  string name = 2;
+  string color = 3;
+}
+
+message ItemParticle {
+  int32 id = 1;
+  string name = 2;
+  string short_name = 3;
+  string image_url = 4;
+}
+
+message TradeItemDetails {
+  string name = 1;
+  string image_url = 2;
+  ItemQuality quality = 3;
+  optional ItemParticle particle = 4;
+}
+
+message TradeUserDetails {
+  string name = 1;
+  string avatar_thumbnail_url = 2;
+  bool online = 3;
+  string steam_id = 4;
+}
+
 message TradeDetails {
   string listing_id = 1;
   google.protobuf.StringValue trade_offer_url = 2;
+  string description = 3;
+  TradeItemDetails item = 4;
+  TradeUserDetails user = 5;
 }
 
 message ListingDetails {
