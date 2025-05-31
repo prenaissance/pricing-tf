@@ -49,6 +49,7 @@ module TestData =
                   killstreakTier = 0
                   _class = [ "pistol" ]
                   slot = "secondary"
+                  particle = None
                   tradable = true
                   craftable = true
                   sheen = None

@@ -62,14 +62,6 @@ module BpTfEventsConverters =
         options.Converters.Add(ListingIntentConverter())
         options.Converters.Add(ListingTypeConverter())
         options.Converters.Add(BooleanDefaultFalseConverter())
-        options.Converters.Add(OptionConverter<SteamPrice>())
-        options.Converters.Add(OptionConverter<CommunityPrice>())
-        options.Converters.Add(OptionConverter<SuggestedPrice>())
-        options.Converters.Add(OptionConverter<Origin>())
-        options.Converters.Add(OptionConverter<UserAgent>())
-        options.Converters.Add(OptionConverter<Sheen>())
-        options.Converters.Add(OptionConverter<Killstreaker>())
-        options.Converters.Add(OptionConverter<Particle>())
-        options.Converters.Add(OptionConverter<int>())
+        options.Converters.Add(OptionConverterFactory())
         options.WriteIndented <- true
         options

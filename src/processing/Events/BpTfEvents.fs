@@ -37,16 +37,7 @@ type Price =
       community: CommunityPrice option
       suggested: SuggestedPrice option }
 
-type Quality =
-    { id: int; name: string; color: string }
 
-type Particle =
-    { id: int
-      name: string
-      shortName: string
-      imageUrl: string
-      [<JsonPropertyName "type">]
-      _type: string }
 
 type Origin = { id: int; name: string }
 
@@ -86,13 +77,14 @@ type ItemListing =
       originalId: string
       // causes some deserialization issue for some reason
       // price: Price
-      quality: Quality
+      quality: ItemQuality
       summary: string
       level: int
       killstreakTier: int
       [<JsonPropertyName "class">]
       _class: string list
       slot: string
+      particle: ItemParticle option
       tradable: bool
       craftable: bool
       sheen: Sheen option

@@ -17,7 +17,7 @@ module BackpackTfApi =
 
     let private jsonOptions =
         let options = JsonSerializerOptions()
-        options.Converters.Add(OptionConverter<obj>())
+        options.Converters.Add(OptionConverterFactory())
 
         options
 
