@@ -28,7 +28,7 @@ type TradeItemDetails =
     { name: string
       imageUrl: string
       quality: ItemQuality
-      particle: ItemParticle }
+      particle: ItemParticle option }
 
 type TradeUserDetails =
     { name: string
