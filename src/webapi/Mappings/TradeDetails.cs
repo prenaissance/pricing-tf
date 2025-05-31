@@ -20,6 +20,7 @@ public sealed partial class TradeDetails
                     Id = tradeDetails.Item.Particle.id,
                     Name = tradeDetails.Item.Particle.name,
                     ImageUrl = tradeDetails.Item.Particle.imageUrl,
+                    ShortName = tradeDetails.Item.Particle.shortName,
                 }
                 : null,
         };
