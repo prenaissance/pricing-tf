@@ -6,11 +6,14 @@ open System.Text.Json
 open Websocket.Client
 open Microsoft.Extensions.Configuration
 
+open PricingTf.Processing.Actors
 open PricingTf.Processing.Events
 open PricingTf.Processing.Services
 open PricingTf.Processing.MapReduce
 open PricingTf.Processing.Utils
 open PricingTf.Processing.Workers
+open MongoDB.Driver
+open PricingTf.Common.Models
 
 [<CLIMutable>]
 type Config =
@@ -32,7 +35,9 @@ let configuration =
     let config = builder.Build().Get<Config>()
 
     { config with
-        MongoDbUrl = config.MongoDbUrl |> StringUtils.defaultIfEmpty "mongodb://localhost:27017"
+        MongoDbUrl =
+            config.MongoDbUrl
+            |> StringUtils.defaultIfEmpty "mongodb://localhost:27117?replicaSet=rs0&connectTimeoutMS=5000"
         MongoDbName = config.MongoDbName |> StringUtils.defaultIfEmpty "backpack-tf-replica"
         ListingsTtlHours =
             if config.ListingsTtlHours > 0 then
@@ -52,6 +57,35 @@ let mutable exchangeRate = getExchangeRate ()
 
 let db = Db.connectToMongoDb configuration.MongoDbUrl configuration.MongoDbName
 
+let blockedUsersCollection =
+    db |> Db.BlockedUsers.getCollection |> Async.RunSynchronously
+
+let blockedUsersAgent =
+    BlockedUsersAgent(
+        blockedUsersCollection
+        |> Db.BlockedUsers.getBlockedUsers
+        |> Async.RunSynchronously
+        |> Seq.map _.steamId
+    )
+
+let blockedUsersCursor =
+    blockedUsersCollection.Watch(EmptyPipelineDefinition<ChangeStreamDocument<BlockedUser>>())
+
+blockedUsersCursor.ForEachAsync(fun change ->
+    async {
+        match change.OperationType with
+        | ChangeStreamOperationType.Insert ->
+            let user = change.FullDocument
+            blockedUsersAgent.Add user
+            printfn "Added blocked user: %s" user.steamId
+        | ChangeStreamOperationType.Delete ->
+            let user = change.FullDocument
+            blockedUsersAgent.Remove user
+            printfn "Removed blocked user: %s" user.steamId
+        | _ -> ()
+    }
+    |> Async.Start)
+|> ignore
 
 let tradeListingsCollection =
     db
@@ -59,17 +93,17 @@ let tradeListingsCollection =
     |> Async.RunSynchronously
 
 let getWsEventStream (url: string) =
-    let client = new WebsocketClient(Uri(url))
+    let client = new WebsocketClient(Uri url)
     client.ReconnectTimeout <- TimeSpan.FromSeconds(30.0)
 
     client.ReconnectionHappened
-    |> Observable.subscribe (fun x -> printfn "Reconnection happened: %A" x)
+    |> Observable.subscribe (fun x -> printfn "WS Reconnection happened: %A" x)
     |> ignore
 
     client.Start() |> Async.AwaitTask |> Async.RunSynchronously |> ignore
 
     client.MessageReceived
-    |> Observable.map (fun x -> x.Text)
+    |> Observable.map _.Text
     |> Observable.map (fun x ->
         try
             let parsed =
@@ -81,6 +115,14 @@ let getWsEventStream (url: string) =
             None)
     |> Observable.filter (fun x -> x.IsSome)
     |> Observable.map (fun x -> x.Value)
+    |> Observable.map (fun events ->
+        events
+        |> List.filter (fun event ->
+            not (
+                blockedUsersAgent.GetAll()
+                |> Async.RunSynchronously
+                |> Set.contains event.payload.steamid
+            )))
 
 let wsEventStream = getWsEventStream wsUrl
 

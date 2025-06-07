@@ -9,3 +9,6 @@ module PricingCollection =
 
     [<Literal>]
     let BotPricesView = "tf-bots-prices"
+
+    [<Literal>]
+    let BlockedUsers = "blocked-users"
