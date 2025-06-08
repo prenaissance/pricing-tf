@@ -125,6 +125,13 @@ module Db =
 
         let getCollection (database: IMongoDatabase) =
             async {
+                let options = CreateCollectionOptions()
+                options.ChangeStreamPreAndPostImagesOptions <- ChangeStreamPreAndPostImagesOptions(Enabled = true)
+
+                do!
+                    database.CreateCollectionAsync(PricingCollection.BlockedUsers, options)
+                    |> Async.AwaitTask
+
                 let collection = database.GetCollection<BlockedUser> PricingCollection.BlockedUsers
 
                 // create index on steamId

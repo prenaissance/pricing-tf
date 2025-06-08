@@ -69,7 +69,10 @@ let blockedUsersAgent =
     )
 
 let blockedUsersCursor =
-    blockedUsersCollection.Watch(EmptyPipelineDefinition<ChangeStreamDocument<BlockedUser>>())
+    blockedUsersCollection.Watch(
+        EmptyPipelineDefinition<ChangeStreamDocument<BlockedUser>>(),
+        ChangeStreamOptions(FullDocumentBeforeChange = ChangeStreamFullDocumentBeforeChangeOption.Required)
+    )
 
 blockedUsersCursor.ForEachAsync(fun change ->
     async {
@@ -79,7 +82,7 @@ blockedUsersCursor.ForEachAsync(fun change ->
             blockedUsersAgent.Add user
             printfn "Added blocked user: %s" user.steamId
         | ChangeStreamOperationType.Delete ->
-            let user = change.FullDocument
+            let user = change.FullDocumentBeforeChange
             blockedUsersAgent.Remove user
             printfn "Removed blocked user: %s" user.steamId
         | _ -> ()
