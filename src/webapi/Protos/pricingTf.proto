@@ -15,6 +15,11 @@ service PricingService {
   rpc GetAllBotPricings (GetAllBotPricingsRequest) returns (stream ItemPricing); 
 }
 
+service BlockUserService {
+  rpc BlockUser (BlockUserRequest) returns (BlockUserResponse);
+  rpc UnblockUser (UnblockUserRequest) returns (UnblockUserResponse);
+}
+
 message ItemRequest {
   string name = 1;
 }
@@ -97,4 +102,21 @@ message DeleteBotPricingRequest {
 }
 
 message DeleteBotPricingResponse {
+}
+
+message BlockUserRequest {
+  string steam_id = 1;
+}
+
+message BlockUserResponse {
+  bool success = 1;
+  int32 deleted_listing_count = 2;
+}
+
+message UnblockUserRequest {
+  string steam_id = 1;
+}
+
+message UnblockUserResponse {
+  bool success = 1;
 }

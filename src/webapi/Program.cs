@@ -29,6 +29,7 @@ var app = builder.Build();
 
 // Configure the HTTP request pipeline.
 app.MapGrpcService<PricingService>();
+app.MapGrpcService<BlockUserService>();
 app.MapGrpcHealthChecksService()
     .AllowAnonymous();
 app.MapGrpcReflectionService();

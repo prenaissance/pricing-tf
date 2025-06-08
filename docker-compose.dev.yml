@@ -1,6 +1,4 @@
-version: "3"
-
 services:
   mongo:
     ports:
-      - "27117:27017"
+      - "27117:27117"
