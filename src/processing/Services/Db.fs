@@ -125,21 +125,30 @@ module Db =
 
         let getCollection (database: IMongoDatabase) =
             async {
-                let options = CreateCollectionOptions()
-                options.ChangeStreamPreAndPostImagesOptions <- ChangeStreamPreAndPostImagesOptions(Enabled = true)
-
-                do!
-                    database.CreateCollectionAsync(PricingCollection.BlockedUsers, options)
+                let hasCollection =
+                    database.ListCollectionNamesAsync()
                     |> Async.AwaitTask
+                    |> Async.RunSynchronously
+                    |> _.ToEnumerable()
+                    |> Seq.exists ((=) PricingCollection.BlockedUsers)
 
                 let collection = database.GetCollection<BlockedUser> PricingCollection.BlockedUsers
 
-                // create index on steamId
-                let indexKey = IndexKeysDefinitionBuilder<BlockedUser>().Ascending("steamId")
-                let indexOptions = new CreateIndexOptions(Unique = true)
-                let indexModel = CreateIndexModel(indexKey, indexOptions)
+                if not hasCollection then
+                    let options = CreateCollectionOptions()
+                    options.ChangeStreamPreAndPostImagesOptions <- ChangeStreamPreAndPostImagesOptions(Enabled = true)
 
-                do! collection.Indexes.CreateOneAsync indexModel |> Async.AwaitTask |> Async.Ignore
+                    do!
+                        database.CreateCollectionAsync(PricingCollection.BlockedUsers, options)
+                        |> Async.AwaitTask
+
+
+                    // create index on steamId
+                    let indexKey = IndexKeysDefinitionBuilder<BlockedUser>().Ascending "steamId"
+                    let indexOptions = new CreateIndexOptions(Unique = true)
+                    let indexModel = CreateIndexModel(indexKey, indexOptions)
+
+                    do! collection.Indexes.CreateOneAsync indexModel |> Async.AwaitTask |> Async.Ignore
 
                 return collection
             }
