@@ -485,3 +485,7 @@ $RECYCLE.BIN/
 
 # Local files
 appsettings.Development.json
+
+# Added by cargo
+
+/target
