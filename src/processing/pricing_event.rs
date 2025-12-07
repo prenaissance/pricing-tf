@@ -27,6 +27,7 @@ pub struct PricingEventPayload {
     pub trade_offers_preferred: bool,
     #[serde(default)]
     pub buyout_only: bool,
+    #[serde(default)]
     pub details: String,
     pub listed_at: u64,
     pub bumped_at: u64,
