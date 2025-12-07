@@ -1,5 +1,7 @@
 use futures_util::StreamExt;
-use pricing_tf::{config::AppConfig, processing::pricing_event::PricingEvent};
+use pricing_tf::{
+    backpack_tf_api::BackpackTfApi, config::AppConfig, processing::pricing_event::PricingEvent,
+};
 use tokio_tungstenite::tungstenite::Message;
 
 const WS_URL: &str = "wss://ws.backpack.tf/events";
@@ -12,7 +14,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         .with_max_level(tracing::Level::from(&app_config.log_level))
         .init();
 
-    let (rx, tx) = tokio::sync::mpsc::unbounded_channel::<PricingEvent>();
+    let (_tx, _rx) = tokio::sync::mpsc::unbounded_channel::<PricingEvent>();
     let (ws_stream, _response) = tokio_tungstenite::connect_async(WS_URL).await?;
     let (_, mut read) = ws_stream.split();
     tracing::info!("Connected to WS server");
@@ -43,6 +45,10 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
             }
         }
     });
+
+    let backpack_tf_api = BackpackTfApi::new(&app_config.backpack_tf_cookie);
+    let exchange_rate = backpack_tf_api.get_key_exchange_rate().await?;
+    tracing::info!("Current key exchange rate: {:.2} ref", exchange_rate);
 
     read_handle.await?;
 
