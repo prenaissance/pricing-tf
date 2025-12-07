@@ -2,9 +2,9 @@ use serde::Deserialize;
 
 #[derive(Debug, Deserialize)]
 pub struct PricingEvent {
-    id: String,
-    event: ListingType,
-    payload: PricingEventPayload,
+    pub id: String,
+    pub event: ListingType,
+    pub payload: PricingEventPayload,
 }
 
 #[derive(Debug, Deserialize, PartialEq, Eq)]
@@ -24,7 +24,74 @@ pub struct PricingEventPayload {
     pub currencies: Tf2Currency,
     pub value: Tf2NaturalCurrency,
     pub trade_offers_preferred: bool,
-    // TODO more fields
+    pub buyout_only: bool,
+    pub details: String,
+    pub listed_at: u64,
+    pub bumped_at: u64,
+    pub intent: ListingIntent,
+    pub count: u32,
+    pub status: String,
+    pub source: String,
+    pub item: ItemListing,
+    pub user_agent: UserAgent,
+    pub user: User,
+}
+
+#[derive(Debug, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct ItemListing {
+    pub appid: u32,
+    pub base_name: String,
+    pub defindex: Option<u32>,
+    pub id: String,
+    pub image_url: String,
+    pub market_name: String,
+    pub name: String,
+    pub origin: Option<Origin>,
+    pub original_id: Option<String>,
+    pub quality: ItemQuality,
+    pub summary: String,
+    /// 1-100
+    pub level: Option<u8>,
+    pub killstreak_tier: Option<u8>,
+    #[serde(default)]
+    pub class: Vec<Tf2CharacterClass>,
+    pub slot: String,
+    pub tradable: bool,
+    pub craftable: bool,
+    pub sheen: Option<Sheen>,
+    pub killstreaker: Option<Killstreaker>,
+}
+
+#[derive(Debug, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct User {
+    pub id: String,
+    pub name: String,
+    pub avatar: String,
+    pub avatar_full: String,
+    pub premium: bool,
+    pub online: bool,
+    pub banned: bool,
+    pub custom_name_style: String,
+    pub class: String,
+    pub style: String,
+    pub trade_offer_url: String,
+    // pub bans: todo get possible structure
+}
+
+#[derive(Debug, Deserialize, PartialEq, Eq)]
+#[serde(rename_all = "lowercase")]
+pub enum ListingIntent {
+    Buy,
+    Sell,
+}
+
+#[derive(Debug, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct UserAgent {
+    pub client: String,
+    pub last_pulse: u64,
 }
 
 #[derive(Debug, Deserialize)]
@@ -40,6 +107,45 @@ pub struct Tf2NaturalCurrency {
     pub raw: f64,
     pub short: String,
     pub long: String,
+}
+
+#[derive(Debug, Deserialize)]
+pub struct Origin {
+    pub id: u32,
+    pub name: String,
+}
+
+#[derive(Debug, Deserialize)]
+pub struct ItemQuality {
+    pub id: u32,
+    pub name: String,
+    pub color: String,
+}
+
+#[derive(Debug, Deserialize)]
+pub struct Sheen {
+    pub id: u32,
+    pub name: String,
+}
+
+#[derive(Debug, Deserialize)]
+pub struct Killstreaker {
+    pub id: u32,
+    pub name: String,
+}
+
+#[derive(Debug, Deserialize, PartialEq, Eq)]
+#[serde(rename_all = "PascalCase")]
+pub enum Tf2CharacterClass {
+    Scout,
+    Soldier,
+    Pyro,
+    Demoman,
+    Heavy,
+    Engineer,
+    Medic,
+    Sniper,
+    Spy,
 }
 
 #[cfg(test)]
@@ -162,6 +268,7 @@ mod tests {
         assert_eq!(event.payload.currencies.keys, 1975.0);
         assert_eq!(event.payload.value.raw, 116189.25);
         assert_eq!(event.payload.trade_offers_preferred, true);
+        assert_eq!(event.payload.item.class, vec![]);
     }
 
     #[test]
@@ -270,5 +377,6 @@ mod tests {
         assert_eq!(event.payload.currencies.metal, 21.77);
         assert_eq!(event.payload.value.raw, 1257.2);
         assert_eq!(event.payload.trade_offers_preferred, true);
+        assert_eq!(event.payload.item.class, vec![Tf2CharacterClass::Heavy]);
     }
 }
