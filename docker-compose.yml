@@ -8,6 +8,6 @@ services:
     environment:
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: example
-      POSTGRES_DB: backpack-tf-replica
+      POSTGRES_DB: pricing_tf
     volumes:
       - pg_data:/var/lib/postgresql/data

@@ -17,13 +17,15 @@ pub enum ListingType {
 #[derive(Debug, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct PricingEventPayload {
-    /// TODO docs
+    /// Backpack.tf listing ID
     pub id: String,
     pub steamid: String,
     pub appid: u32,
     pub currencies: Tf2Currency,
     pub value: Tf2NaturalCurrency,
+    #[serde(default)]
     pub trade_offers_preferred: bool,
+    #[serde(default)]
     pub buyout_only: bool,
     pub details: String,
     pub listed_at: u64,
@@ -33,7 +35,7 @@ pub struct PricingEventPayload {
     pub status: String,
     pub source: String,
     pub item: ItemListing,
-    pub user_agent: UserAgent,
+    pub user_agent: Option<UserAgent>,
     pub user: User,
 }
 
@@ -56,8 +58,10 @@ pub struct ItemListing {
     pub killstreak_tier: Option<u8>,
     #[serde(default)]
     pub class: Vec<Tf2CharacterClass>,
-    pub slot: String,
+    pub slot: Option<String>,
+    #[serde(default)]
     pub tradable: bool,
+    #[serde(default)]
     pub craftable: bool,
     pub sheen: Option<Sheen>,
     pub killstreaker: Option<Killstreaker>,
