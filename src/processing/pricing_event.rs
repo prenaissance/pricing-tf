@@ -1,5 +1,7 @@
 use serde::Deserialize;
 
+use crate::models::{tf2_currency::Tf2Currency, trade_listing::ListingIntent};
+
 #[derive(Debug, Deserialize)]
 pub struct PricingEvent {
     pub id: String,
@@ -29,8 +31,8 @@ pub struct PricingEventPayload {
     pub buyout_only: bool,
     #[serde(default)]
     pub details: String,
-    pub listed_at: u64,
-    pub bumped_at: u64,
+    pub listed_at: i64,
+    pub bumped_at: i64,
     pub intent: ListingIntent,
     pub count: u32,
     pub status: String,
@@ -85,26 +87,11 @@ pub struct User {
     // pub bans: todo get possible structure
 }
 
-#[derive(Debug, Deserialize, PartialEq, Eq)]
-#[serde(rename_all = "lowercase")]
-pub enum ListingIntent {
-    Buy,
-    Sell,
-}
-
 #[derive(Debug, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct UserAgent {
     pub client: String,
     pub last_pulse: u64,
-}
-
-#[derive(Debug, Deserialize)]
-pub struct Tf2Currency {
-    #[serde(default)]
-    pub keys: f64,
-    #[serde(default)]
-    pub metal: f64,
 }
 
 #[derive(Debug, Deserialize)]

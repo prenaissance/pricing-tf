@@ -2,7 +2,8 @@ use core::fmt;
 
 use serde::Deserialize;
 
-use crate::processing::pricing_event::{ListingIntent, Tf2Currency};
+use crate::models::tf2_currency::Tf2Currency;
+use crate::models::trade_listing::ListingIntent;
 
 #[derive(Debug)]
 pub enum BackpackTfApiError {

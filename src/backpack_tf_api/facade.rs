@@ -1,7 +1,5 @@
-use crate::{
-    backpack_tf_api::payloads::{BackpackTfApiError, SnapshotResponse},
-    processing::pricing_event::ListingIntent,
-};
+use crate::backpack_tf_api::payloads::{BackpackTfApiError, SnapshotResponse};
+use crate::models::trade_listing::ListingIntent;
 
 const SNAPSHOT_URL: &str = "https://backpack.tf/api/classifieds/listings/snapshot";
 const MANNCO_SUPPLY_CRATE_KEY: &str = "Mann Co. Supply Crate Key";

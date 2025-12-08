@@ -11,9 +11,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                 "protos/pricing_tf/pricing_service.proto",
                 "protos/pricing_tf/block_user_service.proto",
             ],
-            &[],
+            &["protos/pricing_tf", "google/protobuf"],
         )?;
-    // tonic_prost_build::compile_protos("protos/pricing_tf/pricing_service.proto")?;
-    // tonic_prost_build::compile_protos("protos/pricing_tf/block_user_service.proto")?;
     Ok(())
 }
