@@ -18,7 +18,25 @@ pub async fn run(pool: AsyncDbPool) -> Result<(), Box<dyn std::error::Error + Se
                 let events: Vec<PricingEvent> = match serde_json::from_str(&text) {
                     Ok(ev) => ev,
                     Err(e) => {
-                        tracing::error!("Failed to deserialize message: {}", e);
+                        let file_name = format!(
+                            "failed_ws_message_{}.json",
+                            chrono::Utc::now().timestamp_millis()
+                        );
+                        tracing::error!(
+                            "Failed to deserialize message: {}\nJSON stored in /var/log/pricing_tf/{}",
+                            e,
+                            file_name
+                        );
+                        tokio::fs::create_dir_all("/var/log/pricing_tf")
+                            .await
+                            .expect("Failed to create /var/log/pricing_tf directory");
+                        tokio::fs::write(
+                            format!("/var/log/pricing_tf/{}", file_name),
+                            text.as_bytes(),
+                        )
+                        .await
+                        .expect("Failed to write log to /var/log/pricing_tf");
+
                         continue;
                     }
                 };
@@ -30,7 +48,9 @@ pub async fn run(pool: AsyncDbPool) -> Result<(), Box<dyn std::error::Error + Se
 
                 let connection = pool.get().await?;
 
-                if !upserts.is_empty() {}
+                if !upserts.is_empty() {
+                    use crate::schema::trade_listings::dsl::*;
+                }
             }
             Message::Close(_) => {
                 tracing::info!("WS Server closed connection.");

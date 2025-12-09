@@ -2,15 +2,15 @@ use crate::backpack_tf_api::payloads::{BackpackTfApiError, SnapshotResponse};
 use crate::models::trade_listing::ListingIntent;
 
 const SNAPSHOT_URL: &str = "https://backpack.tf/api/classifieds/listings/snapshot";
-const MANNCO_SUPPLY_CRATE_KEY: &str = "Mann Co. Supply Crate Key";
+pub const MANNCO_SUPPLY_CRATE_KEY: &str = "Mann Co. Supply Crate Key";
 
-pub struct BackpackTfApi<'a> {
-    cookie: &'a str,
+pub struct BackpackTfApi {
+    cookie: String,
     client: reqwest::Client,
 }
 
-impl<'a> BackpackTfApi<'a> {
-    pub fn new(cookie: &'a str) -> Self {
+impl BackpackTfApi {
+    pub fn new(cookie: String) -> Self {
         let client = reqwest::Client::builder()
             .user_agent("PricingTF/4.0")
             .build()
@@ -26,7 +26,7 @@ impl<'a> BackpackTfApi<'a> {
             .client
             .get(SNAPSHOT_URL)
             .query(&params)
-            .header("Cookie", self.cookie)
+            .header("Cookie", &self.cookie)
             .send()
             .await?
             .json()
