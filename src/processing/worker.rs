@@ -26,12 +26,28 @@ pub async fn run(
                             "failed_ws_message_{}.json",
                             chrono::Utc::now().timestamp_millis()
                         );
-                        tokio::fs::create_dir_all("/tmp/pricing_tf")
-                            .await
-                            .expect("Failed to create /tmp/pricing_tf directory");
-                        tokio::fs::write(format!("/tmp/pricing_tf/{}", file_name), text.as_bytes())
-                            .await
-                            .expect("Failed to write log to /tmp/pricing_tf");
+                        if let Err(err) = tokio::fs::create_dir_all("/tmp/pricing_tf").await {
+                            tracing::error!(
+                                "Failed to create /tmp/pricing_tf directory to report deserialization errors. Continuing execution. Error: {}",
+                                err
+                            );
+                            continue;
+                        }
+
+                        if let Err(err) = tokio::fs::write(
+                            format!("/tmp/pricing_tf/{}", file_name),
+                            text.as_bytes(),
+                        )
+                        .await
+                        {
+                            tracing::error!(
+                                "Failed to write failed WS message to /tmp/pricing_tf/{}. Continuing execution. Error: {}",
+                                file_name,
+                                err
+                            );
+                            continue;
+                        }
+
                         tracing::error!(
                             "Failed to deserialize message: {}\nJSON stored in /tmp/pricing_tf/{}",
                             e,
