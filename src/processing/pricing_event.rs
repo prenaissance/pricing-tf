@@ -21,6 +21,8 @@ pub enum ListingType {
 pub enum Source {
     User,
     UserAgent,
+    Steam,
+    MarketplaceTf,
 }
 
 #[derive(Debug, Deserialize)]

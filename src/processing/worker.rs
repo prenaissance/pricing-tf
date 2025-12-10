@@ -8,11 +8,14 @@ use super::etl;
 use super::pricing_event::{ListingType, PricingEvent};
 
 const WS_URL: &str = "wss://ws.backpack.tf/events";
+const PROCESSED_STATISTICS_INTERVAL_MINS: i64 = 5;
 
 pub async fn run(
     pool: AsyncDbPool,
     cached_exchange_rate: CachedExchangeRate,
 ) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
+    let mut processed_events_counter: i64 = 0;
+    let mut last_statistics_log: Option<chrono::DateTime<chrono::Utc>> = None;
     let (ws_stream, _response) = tokio_tungstenite::connect_async(WS_URL).await?;
     tracing::info!("Connected to WS server");
     let (_, mut read) = ws_stream.split();
@@ -63,6 +66,8 @@ pub async fn run(
                     .filter(|event| !etl::is_unusual_weapon(event))
                     .partition::<Vec<_>, _>(|event| event.event == ListingType::ListingUpdate);
 
+                let upserts = etl::filter_unique_listing_events(upserts);
+
                 let upserts_len = upserts.len();
                 let deletes_len = deletes.len();
 
@@ -90,9 +95,22 @@ pub async fn run(
                     upserts_len,
                     deletes_len
                 );
+
+                processed_events_counter += (upserts_len + deletes_len) as i64;
+                let now = chrono::Utc::now();
+                if last_statistics_log.is_none_or(|last_statistics_log| {
+                    now.signed_duration_since(last_statistics_log).num_minutes()
+                        >= PROCESSED_STATISTICS_INTERVAL_MINS
+                }) {
+                    tracing::info!(
+                        "Processed {} events since the start of the program",
+                        processed_events_counter
+                    );
+                    last_statistics_log = Some(now);
+                }
             }
             Message::Close(_) => {
-                tracing::info!("WS Server closed connection.");
+                tracing::warn!("WS Server closed connection.");
             }
             msg => {
                 if msg.is_empty() {

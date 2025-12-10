@@ -1,3 +1,4 @@
+use std::collections::HashSet;
 use std::sync::LazyLock;
 
 use chrono::{DateTime, Utc};
@@ -24,6 +25,23 @@ pub fn is_unusual_weapon(event: &PricingEvent) -> bool {
         .item
         .defindex
         .is_some_and(|defindex| defindex == 134)
+}
+
+pub fn filter_unique_listing_events(
+    events: impl IntoIterator<Item = PricingEvent>,
+) -> Vec<PricingEvent> {
+    let mut encountered_ids = HashSet::<String>::new();
+    events
+        .into_iter()
+        .filter(|event| {
+            if encountered_ids.contains(&event.payload.id) {
+                false
+            } else {
+                encountered_ids.insert(event.payload.id.clone());
+                true
+            }
+        })
+        .collect()
 }
 
 pub async fn upsert_trade_listings(
