@@ -4,6 +4,7 @@ use crate::models::trade_listing::ListingIntent;
 const SNAPSHOT_URL: &str = "https://backpack.tf/api/classifieds/listings/snapshot";
 pub const MANNCO_SUPPLY_CRATE_KEY: &str = "Mann Co. Supply Crate Key";
 
+#[derive(Debug)]
 pub struct BackpackTfApi {
     cookie: String,
     client: reqwest::Client,

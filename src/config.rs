@@ -1,33 +1,8 @@
-use serde::Deserialize;
-
-#[derive(Debug, Deserialize)]
-#[serde(rename_all = "lowercase")]
-pub enum LogLevel {
-    Error,
-    Warn,
-    Info,
-    Debug,
-    Trace,
-}
-
-impl From<&LogLevel> for tracing::Level {
-    fn from(level: &LogLevel) -> Self {
-        match level {
-            LogLevel::Error => tracing::Level::ERROR,
-            LogLevel::Warn => tracing::Level::WARN,
-            LogLevel::Info => tracing::Level::INFO,
-            LogLevel::Debug => tracing::Level::DEBUG,
-            LogLevel::Trace => tracing::Level::TRACE,
-        }
-    }
-}
-
 pub struct AppConfig {
     pub port: u16,
     pub db_url: String,
     pub backpack_tf_cookie: String,
     pub listings_ttl_hours: u32,
-    pub log_level: LogLevel,
 }
 
 impl AppConfig {
@@ -43,17 +18,12 @@ impl AppConfig {
             .unwrap_or("24".to_string())
             .parse()
             .expect("LISTINGS_TTL_HOURS must be a valid u32");
-        let log_level = std::env::var("LOG_LEVEL")
-            .unwrap_or("info".to_string())
-            .to_lowercase();
-        let log_level: LogLevel = serde_json::from_str(&log_level).unwrap_or(LogLevel::Info);
 
         AppConfig {
             port,
             db_url,
             backpack_tf_cookie,
             listings_ttl_hours,
-            log_level,
         }
     }
 }

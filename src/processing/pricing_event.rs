@@ -16,6 +16,13 @@ pub enum ListingType {
     ListingDelete,
 }
 
+#[derive(Debug, Deserialize, PartialEq, Eq)]
+#[serde(rename_all = "camelCase")]
+pub enum Source {
+    User,
+    UserAgent,
+}
+
 #[derive(Debug, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct PricingEventPayload {
@@ -36,7 +43,7 @@ pub struct PricingEventPayload {
     pub intent: ListingIntent,
     pub count: u32,
     pub status: String,
-    pub source: String,
+    pub source: Option<Source>,
     pub item: ItemListing,
     pub user_agent: Option<UserAgent>,
     pub user: User,
@@ -83,7 +90,7 @@ pub struct User {
     pub custom_name_style: String,
     pub class: String,
     pub style: String,
-    pub trade_offer_url: String,
+    pub trade_offer_url: Option<String>,
     // pub bans: todo get possible structure
 }
 

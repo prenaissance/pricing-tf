@@ -20,6 +20,7 @@ impl ExchangeRate {
 
 pub type CachedExchangeRate = Arc<tokio::sync::Mutex<ExchangeRate>>;
 
+#[derive(Debug)]
 pub struct ExchangeRateController {
     backpack_tf_api: BackpackTfApi,
     pub cached_exchange_rate: CachedExchangeRate,
@@ -44,6 +45,7 @@ impl ExchangeRateController {
 
     /// Polls the Backpack.tf API every 10 minutes to update the cached exchange rate
     pub async fn poll_key_exchange_rate(&self) {
+        tracing::info!("Starting key exchange rate polling.");
         let mut interval = tokio::time::interval(std::time::Duration::from_mins(10));
         loop {
             interval.tick().await;

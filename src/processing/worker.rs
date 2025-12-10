@@ -1,6 +1,7 @@
 use futures_util::StreamExt;
 use tokio_tungstenite::tungstenite::Message;
 
+use crate::backpack_tf_api::exchange_rate_controller::CachedExchangeRate;
 use crate::db::AsyncDbPool;
 
 use super::etl;
@@ -8,7 +9,10 @@ use super::pricing_event::{ListingType, PricingEvent};
 
 const WS_URL: &str = "wss://ws.backpack.tf/events";
 
-pub async fn run(pool: AsyncDbPool) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
+pub async fn run(
+    pool: AsyncDbPool,
+    cached_exchange_rate: CachedExchangeRate,
+) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
     let (ws_stream, _response) = tokio_tungstenite::connect_async(WS_URL).await?;
     tracing::info!("Connected to WS server");
     let (_, mut read) = ws_stream.split();
@@ -22,20 +26,17 @@ pub async fn run(pool: AsyncDbPool) -> Result<(), Box<dyn std::error::Error + Se
                             "failed_ws_message_{}.json",
                             chrono::Utc::now().timestamp_millis()
                         );
+                        tokio::fs::create_dir_all("/tmp/pricing_tf")
+                            .await
+                            .expect("Failed to create /tmp/pricing_tf directory");
+                        tokio::fs::write(format!("/tmp/pricing_tf/{}", file_name), text.as_bytes())
+                            .await
+                            .expect("Failed to write log to /tmp/pricing_tf");
                         tracing::error!(
-                            "Failed to deserialize message: {}\nJSON stored in /var/log/pricing_tf/{}",
+                            "Failed to deserialize message: {}\nJSON stored in /tmp/pricing_tf/{}",
                             e,
                             file_name
                         );
-                        tokio::fs::create_dir_all("/var/log/pricing_tf")
-                            .await
-                            .expect("Failed to create /var/log/pricing_tf directory");
-                        tokio::fs::write(
-                            format!("/var/log/pricing_tf/{}", file_name),
-                            text.as_bytes(),
-                        )
-                        .await
-                        .expect("Failed to write log to /var/log/pricing_tf");
 
                         continue;
                     }
@@ -46,11 +47,33 @@ pub async fn run(pool: AsyncDbPool) -> Result<(), Box<dyn std::error::Error + Se
                     .filter(|event| !etl::is_unusual_weapon(event))
                     .partition::<Vec<_>, _>(|event| event.event == ListingType::ListingUpdate);
 
-                let connection = pool.get().await?;
+                let upserts_len = upserts.len();
+                let deletes_len = deletes.len();
+
+                let mut connection = pool.get().await?;
 
                 if !upserts.is_empty() {
-                    use crate::schema::trade_listings::dsl::*;
+                    let exchange_rate = cached_exchange_rate.lock().await.rate;
+
+                    let new_listings: Vec<_> = upserts
+                        .into_iter()
+                        .map(|event| event.to_trade_listing(exchange_rate))
+                        .collect();
+
+                    etl::upsert_trade_listings(&mut connection, new_listings).await?;
                 }
+                if !deletes.is_empty() {
+                    let ids_to_delete: Vec<String> =
+                        deletes.into_iter().map(|event| event.payload.id).collect();
+
+                    etl::delete_trade_listings(&mut connection, ids_to_delete).await?;
+                }
+
+                tracing::debug!(
+                    "Successfully processed an event batch of {} upserts and {} deletes",
+                    upserts_len,
+                    deletes_len
+                );
             }
             Message::Close(_) => {
                 tracing::info!("WS Server closed connection.");
