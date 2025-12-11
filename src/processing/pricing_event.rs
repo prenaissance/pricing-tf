@@ -65,7 +65,7 @@ pub struct ItemListing {
     pub original_id: Option<String>,
     pub quality: ItemQuality,
     pub summary: String,
-    /// 1-100
+    /// very rarely numeric string instead of number
     pub level: Option<u8>,
     pub killstreak_tier: Option<u8>,
     #[serde(default)]
