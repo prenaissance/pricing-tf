@@ -57,16 +57,21 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let exchange_rate_polling_handler =
         tokio::spawn(async move { exchange_rate_controller.poll_key_exchange_rate().await });
 
-    if let Err(err) = ws_processing_handle.await? {
-        tracing::error!("Websocket Processing worker failed: {}", err);
+    let join_handles = tokio::join!(
+        ws_processing_handle,
+        grpc_server_handler,
+        exchange_rate_polling_handler
+    );
+
+    if let Err(err) = join_handles.0 {
+        tracing::error!("WS processing task failed: {}", err);
+    }
+    if let Err(err) = join_handles.2 {
+        tracing::error!("Exchange rate polling task failed: {}", err);
     }
 
-    if let Err(err) = grpc_server_handler.await {
+    if let Err(err) = join_handles.1 {
         tracing::error!("gRPC server failed: {}", err);
-    }
-
-    if let Err(err) = exchange_rate_polling_handler.await {
-        tracing::error!("Exchange Rate Polling worker failed: {}", err);
     }
 
     Ok(())

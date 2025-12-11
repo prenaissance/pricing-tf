@@ -12,8 +12,24 @@ formatted_listings as (
                 'metal', original_price_metal
             ),
             'trade_details', jsonb_build_object(
+                'listing_id', id,
                 'trade_offer_url', trade_details_trade_offer_url,
-                'description', trade_details_description
+                'description', trade_details_description,
+                'item', jsonb_build_object(
+                    'name', item_name,
+                    'image_url', trade_item_details_image_url,
+                    'quality', jsonb_build_object(
+                        'id', item_quality_id,
+                        'name', item_quality_name,
+                        'color', item_quality_color
+                    )
+                ),
+                'user', jsonb_build_object(
+                    'name', trade_user_details_name,
+                    'avatar_thumbnail_url', trade_user_details_avatar_thumbnail_url,
+                    'online', trade_user_details_online,
+                    'steam_id', trade_user_details_steam_id
+                )
             ),
             'bumped_at', bumped_at,
             'price_keys', price_keys,
@@ -23,10 +39,10 @@ formatted_listings as (
 )
 select 
     item_name,
-    jsonb_agg(listing_json order by price_keys DESC, bumped_at DESC) 
-        filter (where intent = 'buy') as buy_listings,
-    jsonb_agg(listing_json order by price_keys ASC, bumped_at DESC) 
-        filter (where intent = 'sell') as sell_listings,
+    coalesce(jsonb_agg(listing_json order by price_keys DESC, bumped_at DESC) 
+        filter (where intent = 'buy'), '[]'::jsonb) as buy_listings,
+    coalesce(jsonb_agg(listing_json order by price_keys ASC, bumped_at DESC) 
+        filter (where intent = 'sell'), '[]'::jsonb) as sell_listings,
     MAX(bumped_at) as updated_at
 from formatted_listings
 group by item_name;
@@ -49,8 +65,24 @@ formatted_listings as (
                 'metal', original_price_metal
             ),
             'trade_details', jsonb_build_object(
+                'listing_id', id,
                 'trade_offer_url', trade_details_trade_offer_url,
-                'description', trade_details_description
+                'description', trade_details_description,
+                'item', jsonb_build_object(
+                    'name', item_name,
+                    'image_url', trade_item_details_image_url,
+                    'quality', jsonb_build_object(
+                        'id', item_quality_id,
+                        'name', item_quality_name,
+                        'color', item_quality_color
+                    )
+                ),
+                'user', jsonb_build_object(
+                    'name', trade_user_details_name,
+                    'avatar_thumbnail_url', trade_user_details_avatar_thumbnail_url,
+                    'online', trade_user_details_online,
+                    'steam_id', trade_user_details_steam_id
+                )
             ),
             'bumped_at', bumped_at,
             'price_keys', price_keys,
@@ -61,10 +93,10 @@ formatted_listings as (
 )
 select 
     item_name,
-    jsonb_agg(listing_json order by price_keys DESC, bumped_at DESC) 
-        filter (where intent = 'buy') as buy_listings,
-    jsonb_agg(listing_json order by price_keys ASC, bumped_at DESC) 
-        filter (where intent = 'sell') as sell_listings,
+    coalesce(jsonb_agg(listing_json order by price_keys DESC, bumped_at DESC) 
+        filter (where intent = 'buy'), '[]'::jsonb) as buy_listings,
+    coalesce(jsonb_agg(listing_json order by price_keys ASC, bumped_at DESC) 
+        filter (where intent = 'sell'), '[]'::jsonb) as sell_listings,
     MAX(bumped_at) as updated_at
 from formatted_listings
 group by item_name;

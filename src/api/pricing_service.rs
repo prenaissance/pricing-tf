@@ -1,12 +1,13 @@
 use std::pin::Pin;
 
+use super::errors::{diesel_error_to_status, pool_error_to_status};
 use crate::backpack_tf_api::exchange_rate_controller::CachedExchangeRate;
 use crate::backpack_tf_api::facade::MANNCO_SUPPLY_CRATE_KEY;
 use crate::db::AsyncDbPool;
-use crate::models::trade_listing::TradeListingRow;
-use crate::models::trade_listing::{ListingIntent, TradeListing};
+use crate::models::item_pricing::ItemPricingRow;
+use crate::models::trade_listing::{ListingIntent, TradeListing, TradeListingRow};
 use crate::protos::pricing_tf::pricing_service;
-use crate::schema::trade_listings;
+use crate::schema::{mv_prices, trade_listings};
 
 use diesel::prelude::*;
 use diesel_async::RunQueryDsl;
@@ -49,7 +50,21 @@ impl pricing_service::pricing_service_server::PricingService for PricingService 
         &self,
         request: Request<pricing_service::ItemRequest>,
     ) -> Result<Response<pricing_service::ItemPricing>, Status> {
-        todo!()
+        let name = request.into_inner().name;
+        if name.is_empty() {
+            return Err(Status::invalid_argument("Item name cannot be empty"));
+        }
+
+        let mut connection = self.pool.get().await.map_err(pool_error_to_status)?;
+        mv_prices::table
+            .filter(mv_prices::item_name.eq(name))
+            .select(ItemPricingRow::as_select())
+            .first::<ItemPricingRow>(&mut connection)
+            .await
+            .optional()
+            .map_err(diesel_error_to_status)?
+            .map(|row| Response::new(row.into()))
+            .ok_or(Status::not_found("Not found"))
     }
 
     async fn get_bot_pricing(
@@ -75,7 +90,7 @@ impl pricing_service::pricing_service_server::PricingService for PricingService 
             Some(listing) => Ok(Response::new(pricing_service::KeyExchangeRateResponse {
                 metal: listing.original_price.metal,
                 source: pricing_service::KeyExchangeSource::Listings as i32,
-                updated_at: Some(prost_types::Timestamp {
+                updated_at: Some(prost_wkt_types::Timestamp {
                     seconds: listing.bumped_at.timestamp(),
                     nanos: 0,
                 }),
@@ -88,7 +103,7 @@ impl pricing_service::pricing_service_server::PricingService for PricingService 
                 Ok(Response::new(pricing_service::KeyExchangeRateResponse {
                     metal: exchange_rate.rate,
                     source: pricing_service::KeyExchangeSource::Snapshot as i32,
-                    updated_at: Some(prost_types::Timestamp {
+                    updated_at: Some(prost_wkt_types::Timestamp {
                         seconds: exchange_rate.updated_at.timestamp(),
                         nanos: 0,
                     }),

@@ -27,6 +27,7 @@ CREATE TABLE trade_listings (
     trade_item_details_image_url text not null,
     
     -- ItemQuality fields
+    item_quality_id int not null,
     item_quality_name text not null,
     item_quality_color text not null,
     

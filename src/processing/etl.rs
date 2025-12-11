@@ -91,11 +91,15 @@ impl PricingEvent {
             bumped_at: DateTime::<Utc>::from_timestamp_secs(self.payload.bumped_at)
                 .expect("Invalid $.payload.bumped_at unhandled: {}"),
             is_automatic: self.payload.user_agent.is_some(),
+
             trade_details_trade_offer_url: self.payload.user.trade_offer_url.unwrap_or_default(),
             trade_details_description: self.payload.details,
             trade_item_details_image_url: self.payload.item.image_url,
+
+            item_quality_id: self.payload.item.quality.id as i32,
             item_quality_name: self.payload.item.quality.name,
             item_quality_color: self.payload.item.quality.color,
+
             trade_user_details_name: self.payload.user.name,
             trade_user_details_avatar_thumbnail_url: self.payload.user.avatar,
             trade_user_details_online: self.payload.user.online,

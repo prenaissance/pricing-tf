@@ -3,6 +3,11 @@ use std::path::PathBuf;
 fn main() -> Result<(), Box<dyn std::error::Error>> {
     let out_dir = PathBuf::from(std::env::var("OUT_DIR")?);
     tonic_prost_build::configure()
+        .type_attribute(
+            ".",
+            "#[derive(serde::Deserialize)]\n#[serde(rename_all = \"snake_case\")]",
+        )
+        .extern_path(".google.protobuf.Timestamp", "::prost_wkt_types::Timestamp")
         .build_server(true)
         .build_client(false)
         .file_descriptor_set_path(out_dir.join("pricing_tf_descriptor.bin"))

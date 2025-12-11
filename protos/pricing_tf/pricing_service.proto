@@ -24,7 +24,7 @@ message Tf2Currency {
 }
 
 message ItemQuality {
-  int32 id = 1;
+  uint32 id = 1;
   string name = 2;
   string color = 3;
 }

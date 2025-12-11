@@ -7,6 +7,7 @@ use crate::models::tf2_currency::Tf2Currency;
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct ItemQuality {
+    pub id: u32,
     pub name: String,
     pub color: String,
 }
@@ -77,6 +78,7 @@ pub struct TradeListingRow {
 
     pub trade_item_details_image_url: String,
 
+    pub item_quality_id: i32,
     pub item_quality_name: String,
     pub item_quality_color: String,
 
@@ -90,6 +92,7 @@ impl From<TradeListingRow> for TradeListing {
     fn from(row: TradeListingRow) -> Self {
         // Reconstruct nested structs
         let item_quality = ItemQuality {
+            id: row.item_quality_id as u32,
             name: row.item_quality_name,
             color: row.item_quality_color,
         };
@@ -147,6 +150,7 @@ pub struct NewTradeListing {
 
     pub trade_item_details_image_url: String,
 
+    pub item_quality_id: i32,
     pub item_quality_name: String,
     pub item_quality_color: String,
 
@@ -174,6 +178,8 @@ impl From<TradeListing> for NewTradeListing {
             trade_details_trade_offer_url: model.trade_details.trade_offer_url,
             trade_details_description: model.trade_details.description,
             trade_item_details_image_url: model.trade_details.item.image_url,
+
+            item_quality_id: model.trade_details.item.quality.id as i32,
             item_quality_name: model.trade_details.item.quality.name,
             item_quality_color: model.trade_details.item.quality.color,
 

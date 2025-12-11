@@ -24,6 +24,7 @@ diesel::table! {
         trade_details_trade_offer_url -> Text,
         trade_details_description -> Text,
         trade_item_details_image_url -> Text,
+        item_quality_id -> Int4,
         item_quality_name -> Text,
         item_quality_color -> Text,
         trade_user_details_name -> Text,
