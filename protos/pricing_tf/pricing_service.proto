@@ -2,6 +2,7 @@ syntax = "proto3";
 
 import "google/protobuf/empty.proto";
 import "google/protobuf/timestamp.proto";
+import "google/protobuf/duration.proto";
 import "google/protobuf/wrappers.proto";
 
 package pricing_tf.pricing_service;
@@ -80,7 +81,7 @@ message KeyExchangeRateResponse {
 }
 
 message GetAllBotPricingsRequest {
-  optional uint32 updated_since_seconds = 1;
+  optional google.protobuf.Duration stale_limit = 1;
 }
 
 message DeleteBotPricingRequest {

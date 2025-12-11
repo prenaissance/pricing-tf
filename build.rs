@@ -8,6 +8,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
             "#[derive(serde::Deserialize)]\n#[serde(rename_all = \"snake_case\")]",
         )
         .extern_path(".google.protobuf.Timestamp", "::prost_wkt_types::Timestamp")
+        .extern_path(".google.protobuf.Duration", "::prost_wkt_types::Duration")
         .build_server(true)
         .build_client(false)
         .file_descriptor_set_path(out_dir.join("pricing_tf_descriptor.bin"))
