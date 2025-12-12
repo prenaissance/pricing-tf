@@ -42,6 +42,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let ws_processing_handle = tokio::spawn(pricing_tf::processing::worker::run(
         pool.clone(),
         exchange_rate_controller.cached_exchange_rate.clone(),
+        blocked_user_steam_ids.clone(),
     ));
 
     let materialized_views_handle = tokio::spawn(

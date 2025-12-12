@@ -1,3 +1,6 @@
+use std::collections::HashSet;
+use std::sync::Arc;
+
 use futures_util::StreamExt;
 use tokio_tungstenite::tungstenite::Message;
 
@@ -13,6 +16,7 @@ const PROCESSED_STATISTICS_INTERVAL_MINS: i64 = 5;
 pub async fn run(
     pool: AsyncDbPool,
     cached_exchange_rate: CachedExchangeRate,
+    blocked_user_steam_ids: Arc<tokio::sync::Mutex<HashSet<String>>>,
 ) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
     let mut processed_events_counter: i64 = 0;
     let mut last_statistics_log: Option<chrono::DateTime<chrono::Utc>> = None;
@@ -60,10 +64,12 @@ pub async fn run(
                         continue;
                     }
                 };
+                let steam_ids = blocked_user_steam_ids.lock().await;
                 let (upserts, deletes) = events
                     .into_iter()
                     // How does this even happen?
                     .filter(|event| !event.payload.item.name.is_empty())
+                    .filter(|event| !steam_ids.contains(&event.payload.steamid))
                     .filter(|event| !etl::is_spelled_item(event))
                     .filter(|event| !etl::is_unusual_weapon(event))
                     .partition::<Vec<_>, _>(|event| event.event == ListingType::ListingUpdate);
