@@ -6,6 +6,7 @@ use pricing_tf::api::{block_user_service::BlockUserService, pricing_service::Pri
 use pricing_tf::backpack_tf_api::BackpackTfApi;
 use pricing_tf::backpack_tf_api::exchange_rate_controller::ExchangeRateController;
 use pricing_tf::config::AppConfig;
+use pricing_tf::db;
 use pricing_tf::protos::pricing_tf::block_user_service::block_user_service_server::BlockUserServiceServer;
 use pricing_tf::protos::pricing_tf::pricing_service::pricing_service_server::PricingServiceServer;
 use tracing_subscriber::EnvFilter;
@@ -41,6 +42,14 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         exchange_rate_controller.cached_exchange_rate.clone(),
     ));
 
+    let materialized_views_handle = tokio::spawn(
+        db::workers::run_refresh_materialized_views_worker(pool.clone()),
+    );
+    let delete_ttl_listings_handle = tokio::spawn(db::workers::run_delete_ttl_listings_worker(
+        pool.clone(),
+        app_config.listings_ttl_hours,
+    ));
+
     let reflection_service = tonic_reflection::server::Builder::configure()
         .register_encoded_file_descriptor_set(FILE_DESCRIPTOR_SET)
         .build_v1()?;
@@ -60,18 +69,25 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let join_handles = tokio::join!(
         ws_processing_handle,
         grpc_server_handler,
-        exchange_rate_polling_handler
+        exchange_rate_polling_handler,
+        materialized_views_handle,
+        delete_ttl_listings_handle
     );
 
     if let Err(err) = join_handles.0 {
         tracing::error!("WS processing task failed: {}", err);
     }
+    if let Err(err) = join_handles.1 {
+        tracing::error!("gRPC server failed: {}", err);
+    }
     if let Err(err) = join_handles.2 {
         tracing::error!("Exchange rate polling task failed: {}", err);
     }
-
-    if let Err(err) = join_handles.1 {
-        tracing::error!("gRPC server failed: {}", err);
+    if let Err(err) = join_handles.3 {
+        tracing::error!("Materialized views worker failed: {}", err);
+    }
+    if let Err(err) = join_handles.4 {
+        tracing::error!("Delete TTL listings worker failed: {}", err);
     }
 
     Ok(())
