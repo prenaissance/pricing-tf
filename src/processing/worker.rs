@@ -63,7 +63,7 @@ pub async fn run(
                 let (upserts, deletes) = events
                     .into_iter()
                     // How does this even happen?
-                    .filter(|event| event.payload.item.name != "")
+                    .filter(|event| !event.payload.item.name.is_empty())
                     .filter(|event| !etl::is_spelled_item(event))
                     .filter(|event| !etl::is_unusual_weapon(event))
                     .partition::<Vec<_>, _>(|event| event.event == ListingType::ListingUpdate);

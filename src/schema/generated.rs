@@ -7,6 +7,13 @@ pub mod sql_types {
 }
 
 diesel::table! {
+    blocked_users (steamid) {
+        steamid -> Text,
+        blocked_at -> Timestamptz,
+    }
+}
+
+diesel::table! {
     use diesel::sql_types::*;
     use super::sql_types::ListingIntentType;
 
@@ -33,3 +40,5 @@ diesel::table! {
         trade_user_details_steam_id -> Text,
     }
 }
+
+diesel::allow_tables_to_appear_in_same_query!(blocked_users, trade_listings,);

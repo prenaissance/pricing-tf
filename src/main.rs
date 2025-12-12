@@ -25,6 +25,8 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let db_config = AsyncDieselConnectionManager::<AsyncPgConnection>::new(&app_config.db_url);
     let pool = Pool::builder(db_config).build()?;
 
+    let blocked_user_steam_ids = db::blocked_users::load_all_blocked_steam_ids(&pool).await?;
+
     let backpack_tf_api = BackpackTfApi::new(app_config.backpack_tf_cookie.clone());
     let exchange_rate_controller = ExchangeRateController::init(backpack_tf_api)
         .await
@@ -59,7 +61,10 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
             pool.clone(),
             exchange_rate_controller.cached_exchange_rate.clone(),
         )))
-        .add_service(BlockUserServiceServer::new(BlockUserService {}))
+        .add_service(BlockUserServiceServer::new(BlockUserService::new(
+            pool.clone(),
+            blocked_user_steam_ids.clone(),
+        )))
         .add_service(reflection_service)
         .serve(addr);
 

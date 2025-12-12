@@ -13,7 +13,7 @@ message BlockUserRequest {
 
 message BlockUserResponse {
   bool success = 1;
-  int32 deleted_listing_count = 2;
+  uint32 deleted_listing_count = 2;
 }
 
 message UnblockUserRequest {
