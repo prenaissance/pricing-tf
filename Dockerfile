@@ -1,6 +1,6 @@
-FROM rust:1.92.0-alpine AS builder
+FROM rust:1.92.0-alpine3.22 AS builder
 WORKDIR /app
-RUN apk update && apk add --no-cache protobuf-dev postgresql-dev
+RUN apk update --scripts=no && apk add --scripts=no --no-cache protobuf-dev postgresql-dev
 
 COPY Cargo.toml Cargo.lock build.rs ./
 COPY ./protos/ ./protos/
