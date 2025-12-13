@@ -1,5 +1,4 @@
 {
-  "editor.inlayHints.enabled": "offUnlessPressed",
   "cSpell.words": [
     "bptf",
     "Bson",
@@ -22,11 +21,5 @@
     "Unusuals",
     "Upsert",
     "upserts"
-  ],
-  "[fsharp]": {
-    "diffEditor.ignoreTrimWhitespace": false,
-    "editor.formatOnSave": true,
-    "editor.tabSize": 2,
-    "editor.insertSpaces": true
-  }
+  ]
 }

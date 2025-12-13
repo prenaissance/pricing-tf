@@ -4,6 +4,8 @@ services:
     depends_on:
       postgres:
         condition: service_healthy
+    ports:
+      - 8080:8080
     env_file: .env
     environment:
       - DATABASE_URL=postgres://postgres:example@postgres:5432/pricing_tf
