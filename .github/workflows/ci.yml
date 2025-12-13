@@ -5,7 +5,7 @@ on:
   pull_request:
 
 jobs:
-  checks:
+  lint:
     name: Rust Linting and Format Checks
     runs-on: ubuntu-latest
     steps:
@@ -22,10 +22,8 @@ jobs:
         uses: Swatinem/rust-cache@v2
       - name: Format Check
         run: cargo fmt -- --check
-        working-directory: ./src-tauri
       - name: Lint Check
         run: cargo clippy
-        working-directory: ./src-tauri
 
   tests:
     name: Rust Tests
@@ -42,6 +40,7 @@ jobs:
           toolchain: stable
       - name: Setup Rust Cache
         uses: Swatinem/rust-cache@v2
-
-      - name: Unit Tests
+      - name: Build
+        run: cargo build --tests
+      - name: Unit & Doc Tests
         run: cargo test
