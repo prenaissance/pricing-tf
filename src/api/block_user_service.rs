@@ -4,7 +4,7 @@ use std::sync::Arc;
 use super::errors::{diesel_error_to_status, pool_error_to_status};
 use crate::db::AsyncDbPool;
 use crate::models::blocked_user::BlockedUser;
-use crate::protos::pricing_tf::block_user_service;
+use crate::protos::pricing_tf::blocked_users::v1 as blocked_users_v1;
 use crate::schema::{blocked_users, trade_listings};
 use diesel::dsl::exists;
 use diesel::prelude::*;
@@ -30,11 +30,11 @@ impl BlockUserService {
 }
 
 #[tonic::async_trait]
-impl block_user_service::block_user_service_server::BlockUserService for BlockUserService {
+impl blocked_users_v1::block_user_service_server::BlockUserService for BlockUserService {
     async fn block_user(
         &self,
-        request: Request<block_user_service::BlockUserRequest>,
-    ) -> Result<Response<block_user_service::BlockUserResponse>, Status> {
+        request: Request<blocked_users_v1::BlockUserRequest>,
+    ) -> Result<Response<blocked_users_v1::BlockUserResponse>, Status> {
         let steam_id = request.into_inner().steam_id;
         let mut connection = self.pool.get().await.map_err(pool_error_to_status)?;
 
@@ -82,7 +82,7 @@ impl block_user_service::block_user_service_server::BlockUserService for BlockUs
             "Blocked user and deleted {} of their listings",
             deleted_count
         );
-        Ok(Response::new(block_user_service::BlockUserResponse {
+        Ok(Response::new(blocked_users_v1::BlockUserResponse {
             success: true,
             deleted_listing_count: deleted_count as u32,
         }))
@@ -90,8 +90,8 @@ impl block_user_service::block_user_service_server::BlockUserService for BlockUs
 
     async fn unblock_user(
         &self,
-        request: Request<block_user_service::UnblockUserRequest>,
-    ) -> Result<Response<block_user_service::UnblockUserResponse>, Status> {
+        request: Request<blocked_users_v1::UnblockUserRequest>,
+    ) -> Result<Response<blocked_users_v1::UnblockUserResponse>, Status> {
         let steam_id = request.into_inner().steam_id;
         let mut connection = self.pool.get().await.map_err(pool_error_to_status)?;
 
@@ -105,7 +105,7 @@ impl block_user_service::block_user_service_server::BlockUserService for BlockUs
         let mut blocked_user_steam_ids = self.blocked_user_steam_ids.lock().await;
         blocked_user_steam_ids.remove(&steam_id);
 
-        Ok(Response::new(block_user_service::UnblockUserResponse {
+        Ok(Response::new(blocked_users_v1::UnblockUserResponse {
             success: delete_count > 0,
         }))
     }

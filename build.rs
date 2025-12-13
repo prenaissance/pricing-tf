@@ -14,8 +14,8 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         .file_descriptor_set_path(out_dir.join("pricing_tf_descriptor.bin"))
         .compile_protos(
             &[
-                "protos/pricing_tf/pricing_service.proto",
-                "protos/pricing_tf/block_user_service.proto",
+                "protos/pricing_tf/pricing/v1/pricing_service.proto",
+                "protos/pricing_tf/blocked_users/v1/block_user_service.proto",
             ],
             &["protos/pricing_tf", "google/protobuf"],
         )?;

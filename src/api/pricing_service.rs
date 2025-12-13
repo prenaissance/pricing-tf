@@ -6,7 +6,7 @@ use crate::backpack_tf_api::facade::MANNCO_SUPPLY_CRATE_KEY;
 use crate::db::AsyncDbPool;
 use crate::models::item_pricing::{BotItemPricingRow, ItemPricingRow};
 use crate::models::trade_listing::{ListingIntent, TradeListing, TradeListingRow};
-use crate::protos::pricing_tf::pricing_service;
+use crate::protos::pricing_tf::pricing;
 use crate::schema::{mv_bot_prices, mv_prices, trade_listings};
 
 use diesel::prelude::*;
@@ -47,11 +47,11 @@ impl PricingService {
 }
 
 #[tonic::async_trait]
-impl pricing_service::pricing_service_server::PricingService for PricingService {
+impl pricing::v1::pricing_service_server::PricingService for PricingService {
     async fn get_pricing(
         &self,
-        request: Request<pricing_service::ItemRequest>,
-    ) -> Result<Response<pricing_service::ItemPricing>, Status> {
+        request: Request<pricing::v1::ItemRequest>,
+    ) -> Result<Response<pricing::v1::ItemPricing>, Status> {
         let name = request.into_inner().name;
         if name.is_empty() {
             return Err(Status::invalid_argument("Item name cannot be empty"));
@@ -71,8 +71,8 @@ impl pricing_service::pricing_service_server::PricingService for PricingService 
 
     async fn get_bot_pricing(
         &self,
-        request: Request<pricing_service::ItemRequest>,
-    ) -> Result<Response<pricing_service::ItemPricing>, Status> {
+        request: Request<pricing::v1::ItemRequest>,
+    ) -> Result<Response<pricing::v1::ItemPricing>, Status> {
         let name = request.into_inner().name;
         if name.is_empty() {
             return Err(Status::invalid_argument("Item name cannot be empty"));
@@ -92,8 +92,8 @@ impl pricing_service::pricing_service_server::PricingService for PricingService 
 
     async fn delete_bot_pricing(
         &self,
-        request: Request<pricing_service::DeleteBotPricingRequest>,
-    ) -> Result<Response<pricing_service::DeleteBotPricingResponse>, Status> {
+        request: Request<pricing::v1::DeleteBotPricingRequest>,
+    ) -> Result<Response<pricing::v1::DeleteBotPricingResponse>, Status> {
         let name = request.into_inner().name;
         if name.is_empty() {
             return Err(Status::invalid_argument("Item name cannot be empty"));
@@ -105,18 +105,18 @@ impl pricing_service::pricing_service_server::PricingService for PricingService 
             .await
             .map_err(diesel_error_to_status)?;
 
-        Ok(Response::new(pricing_service::DeleteBotPricingResponse {}))
+        Ok(Response::new(pricing::v1::DeleteBotPricingResponse {}))
     }
 
     async fn get_key_exchange_rate(
         &self,
         _request: Request<()>,
-    ) -> Result<Response<pricing_service::KeyExchangeRateResponse>, Status> {
+    ) -> Result<Response<pricing::v1::KeyExchangeRateResponse>, Status> {
         let listing = self.get_exchange_rate_from_listings().await;
         match listing {
-            Some(listing) => Ok(Response::new(pricing_service::KeyExchangeRateResponse {
+            Some(listing) => Ok(Response::new(pricing::v1::KeyExchangeRateResponse {
                 metal: listing.original_price.metal,
-                source: pricing_service::KeyExchangeSource::Listings as i32,
+                source: pricing::v1::KeyExchangeSource::Listings as i32,
                 updated_at: Some(prost_wkt_types::Timestamp {
                     seconds: listing.bumped_at.timestamp(),
                     nanos: 0,
@@ -127,9 +127,9 @@ impl pricing_service::pricing_service_server::PricingService for PricingService 
                     "Not enough information collected from events for key rate, using backpack.tf API."
                 );
                 let exchange_rate = self.exchange_rate.lock().await;
-                Ok(Response::new(pricing_service::KeyExchangeRateResponse {
+                Ok(Response::new(pricing::v1::KeyExchangeRateResponse {
                     metal: exchange_rate.rate,
-                    source: pricing_service::KeyExchangeSource::Snapshot as i32,
+                    source: pricing::v1::KeyExchangeSource::Snapshot as i32,
                     updated_at: Some(prost_wkt_types::Timestamp {
                         seconds: exchange_rate.updated_at.timestamp(),
                         nanos: 0,
@@ -140,11 +140,11 @@ impl pricing_service::pricing_service_server::PricingService for PricingService 
     }
 
     type GetAllBotPricingsStream =
-        Pin<Box<dyn Stream<Item = Result<pricing_service::ItemPricing, Status>> + Send>>;
+        Pin<Box<dyn Stream<Item = Result<pricing::v1::ItemPricing, Status>> + Send>>;
 
     async fn get_all_bot_pricings(
         &self,
-        request: Request<pricing_service::GetAllBotPricingsRequest>,
+        request: Request<pricing::v1::GetAllBotPricingsRequest>,
     ) -> Result<Response<Self::GetAllBotPricingsStream>, Status> {
         use futures_util::stream::StreamExt;
         let limit = request

@@ -1,4 +1,4 @@
-use crate::protos::pricing_tf::pricing_service;
+use crate::protos::pricing_tf::pricing;
 use diesel::prelude::*;
 
 macro_rules! define_pricing_row {
@@ -13,14 +13,14 @@ macro_rules! define_pricing_row {
             pub updated_at: chrono::DateTime<chrono::Utc>,
         }
 
-        impl From<$struct_name> for pricing_service::ItemPricing {
+        impl From<$struct_name> for pricing::v1::ItemPricing {
             fn from(value: $struct_name) -> Self {
-                let buy_listings: Vec<pricing_service::ListingDetails> =
+                let buy_listings: Vec<pricing::v1::ListingDetails> =
                     serde_json::from_value(value.buy_listings).unwrap_or_default();
-                let sell_listings: Vec<pricing_service::ListingDetails> =
+                let sell_listings: Vec<pricing::v1::ListingDetails> =
                     serde_json::from_value(value.sell_listings).unwrap_or_default();
 
-                pricing_service::ItemPricing {
+                pricing::v1::ItemPricing {
                     name: value.item_name,
                     buy: buy_listings.get(0).cloned(),
                     sell: sell_listings.get(0).cloned(),

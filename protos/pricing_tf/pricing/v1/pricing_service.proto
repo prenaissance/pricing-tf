@@ -5,13 +5,19 @@ import "google/protobuf/timestamp.proto";
 import "google/protobuf/duration.proto";
 import "google/protobuf/wrappers.proto";
 
-package pricing_tf.pricing_service;
+package pricing_tf.pricing.v1;
 
+// Get aggregated pricing information per item name
 service PricingService {
+  // Get pricing information for an item, including bot and human listings
   rpc GetPricing (ItemRequest) returns (ItemPricing);
+  // Get pricing information for an item, including only bot listings
   rpc GetBotPricing (ItemRequest) returns (ItemPricing);
+  // Deletes information about a specified item
   rpc DeleteBotPricing (DeleteBotPricingRequest) returns (DeleteBotPricingResponse);
+  // Get the key to metal exchange rate, calculated either from bot listings or collected data
   rpc GetKeyExchangeRate (google.protobuf.Empty) returns (KeyExchangeRateResponse);
+  // Stream all bot item prices, to integrate with your app
   rpc GetAllBotPricings (GetAllBotPricingsRequest) returns (stream ItemPricing); 
 }
 
@@ -70,8 +76,8 @@ message ItemPricing {
 }
 
 enum KeyExchangeSource {
-  Listings = 0;
-  Snapshot = 1;
+  LISTINGS = 0;
+  SNAPSHOT = 1;
 }
 
 message KeyExchangeRateResponse {

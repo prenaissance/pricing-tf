@@ -1,8 +1,12 @@
 pub mod pricing_tf {
-    pub mod pricing_service {
-        tonic::include_proto!("pricing_tf.pricing_service");
+    pub mod pricing {
+        pub mod v1 {
+            tonic::include_proto!("pricing_tf.pricing.v1");
+        }
     }
-    pub mod block_user_service {
-        tonic::include_proto!("pricing_tf.block_user_service");
+    pub mod blocked_users {
+        pub mod v1 {
+            tonic::include_proto!("pricing_tf.blocked_users.v1");
+        }
     }
 }

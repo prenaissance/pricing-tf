@@ -1,9 +1,12 @@
 syntax = "proto3";
 
-package pricing_tf.block_user_service;
+package pricing_tf.blocked_users.v1;
 
+// Manage blocked users
 service BlockUserService {
+  // Block user by their steam id. Their current and future trade listings will be removed
   rpc BlockUser (BlockUserRequest) returns (BlockUserResponse);
+  // Reverts the BlockUser RPC. Idempotent.
   rpc UnblockUser (UnblockUserRequest) returns (UnblockUserResponse);
 }
 

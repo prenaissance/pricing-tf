@@ -7,8 +7,8 @@ use pricing_tf::backpack_tf_api::BackpackTfApi;
 use pricing_tf::backpack_tf_api::exchange_rate_controller::ExchangeRateController;
 use pricing_tf::config::AppConfig;
 use pricing_tf::db;
-use pricing_tf::protos::pricing_tf::block_user_service::block_user_service_server::BlockUserServiceServer;
-use pricing_tf::protos::pricing_tf::pricing_service::pricing_service_server::PricingServiceServer;
+use pricing_tf::protos::pricing_tf::blocked_users::v1::block_user_service_server::BlockUserServiceServer;
+use pricing_tf::protos::pricing_tf::pricing::v1::pricing_service_server::PricingServiceServer;
 use tracing_subscriber::EnvFilter;
 
 const FILE_DESCRIPTOR_SET: &[u8] = tonic::include_file_descriptor_set!("pricing_tf_descriptor");
