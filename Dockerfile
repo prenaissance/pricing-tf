@@ -1,6 +1,7 @@
-FROM rust:1.92.0-alpine3.22 AS builder
+FROM rust:1.92.0-alpine3.23 AS builder
 WORKDIR /app
-RUN apk update --scripts=no && apk add --scripts=no --no-cache protobuf-dev postgresql-dev
+# Busybox bug on arm64, remove the flags when alpine is fixed
+RUN apk upgrade --no-cache --scripts=no apk-tools && apk add --no-cache protobuf-dev postgresql-dev
 
 COPY Cargo.toml Cargo.lock build.rs ./
 COPY ./protos/ ./protos/
