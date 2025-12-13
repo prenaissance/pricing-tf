@@ -8,4 +8,5 @@ services:
       - 8080:8080
     env_file: .env
     environment:
+      - RUST_LOG=info
       - DATABASE_URL=postgres://postgres:example@postgres:5432/pricing_tf

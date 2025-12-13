@@ -4,6 +4,7 @@ RUN apk update && apk add --no-cache protobuf-dev postgresql-dev
 
 COPY Cargo.toml Cargo.lock build.rs ./
 COPY ./protos/ ./protos/
+COPY ./migrations/ ./migrations/
 # Simulate src folder to install dependencies & run build script
 RUN mkdir src && echo "fn main() {}" > src/main.rs && cargo build --release && rm -rf src
 
@@ -15,8 +16,7 @@ RUN strip ./target/release/pricing-tf
 FROM alpine:latest
 WORKDIR /app
 
-ENV PORT=80
-EXPOSE 80
+EXPOSE 8080
 
 COPY --from=builder /app/target/release/pricing-tf ./pricing-tf
 ENTRYPOINT ["./pricing-tf"]

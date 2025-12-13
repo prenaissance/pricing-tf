@@ -1,7 +1,9 @@
 use diesel_async::AsyncPgConnection;
+use diesel_async::async_connection_wrapper::AsyncConnectionWrapper;
 use diesel_async::pooled_connection::AsyncDieselConnectionManager;
 use diesel_async::pooled_connection::deadpool::Pool;
 
+use diesel_migrations::{EmbeddedMigrations, MigrationHarness, embed_migrations};
 use pricing_tf::api::{block_user_service::BlockUserService, pricing_service::PricingService};
 use pricing_tf::backpack_tf_api::BackpackTfApi;
 use pricing_tf::backpack_tf_api::exchange_rate_controller::ExchangeRateController;
@@ -12,6 +14,7 @@ use pricing_tf::protos::pricing_tf::pricing::v1::pricing_service_server::Pricing
 use tracing_subscriber::EnvFilter;
 
 const FILE_DESCRIPTOR_SET: &[u8] = tonic::include_file_descriptor_set!("pricing_tf_descriptor");
+const MIGRATIONS: EmbeddedMigrations = embed_migrations!();
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
@@ -24,6 +27,17 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     let db_config = AsyncDieselConnectionManager::<AsyncPgConnection>::new(&app_config.db_url);
     let pool = Pool::builder(db_config).build()?;
+    let mut sync_connection: AsyncConnectionWrapper<_> = pool.get().await?.into();
+    let migrations_result = tokio::task::spawn_blocking(move || {
+        sync_connection
+            .run_pending_migrations(MIGRATIONS)
+            .expect("Failed to run migrations within spawned task");
+    })
+    .await;
+    if let Err(err) = &migrations_result {
+        tracing::error!("Failed to run database migrations: {}", err);
+        migrations_result?;
+    }
 
     let blocked_user_steam_ids = db::blocked_users::load_all_blocked_steam_ids(&pool).await?;
 
@@ -75,29 +89,23 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let exchange_rate_polling_handler =
         tokio::spawn(async move { exchange_rate_controller.poll_key_exchange_rate().await });
 
-    let join_handles = tokio::join!(
-        ws_processing_handle,
-        grpc_server_handler,
-        exchange_rate_polling_handler,
-        materialized_views_handle,
-        delete_ttl_listings_handle
-    );
-
-    if let Err(err) = join_handles.0 {
-        tracing::error!("WS processing task failed: {}", err);
-    }
-    if let Err(err) = join_handles.1 {
-        tracing::error!("gRPC server failed: {}", err);
-    }
-    if let Err(err) = join_handles.2 {
-        tracing::error!("Exchange rate polling task failed: {}", err);
-    }
-    if let Err(err) = join_handles.3 {
-        tracing::error!("Materialized views worker failed: {}", err);
-    }
-    if let Err(err) = join_handles.4 {
-        tracing::error!("Delete TTL listings worker failed: {}", err);
-    }
+    tokio::select! {
+        res = grpc_server_handler => {
+            tracing::error!("gRPC server handler exited unexpectedly: {:?}", res);
+        }
+        res = ws_processing_handle => {
+            tracing::error!("WebSocket processing handler exited unexpectedly: {:?}", res);
+        }
+        res = materialized_views_handle => {
+            tracing::error!("Materialized views worker exited unexpectedly: {:?}", res);
+        }
+        res = delete_ttl_listings_handle => {
+            tracing::error!("Delete TTL listings worker exited unexpectedly: {:?}", res);
+        }
+        res = exchange_rate_polling_handler => {
+            tracing::error!("Exchange rate polling handler exited unexpectedly: {:?}", res);
+        }
+    };
 
     Ok(())
 }
