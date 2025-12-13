@@ -1,0 +1,98 @@
+syntax = "proto3";
+
+import "google/protobuf/empty.proto";
+import "google/protobuf/timestamp.proto";
+import "google/protobuf/duration.proto";
+import "google/protobuf/wrappers.proto";
+
+package pricing_tf.pricing.v1;
+
+// Get aggregated pricing information per item name
+service PricingService {
+  // Get pricing information for an item, including bot and human listings
+  rpc GetPricing (ItemRequest) returns (ItemPricing);
+  // Get pricing information for an item, including only bot listings
+  rpc GetBotPricing (ItemRequest) returns (ItemPricing);
+  // Deletes information about a specified item
+  rpc DeleteBotPricing (DeleteBotPricingRequest) returns (DeleteBotPricingResponse);
+  // Get the key to metal exchange rate, calculated either from bot listings or collected data
+  rpc GetKeyExchangeRate (google.protobuf.Empty) returns (KeyExchangeRateResponse);
+  // Stream all bot item prices, to integrate with your app
+  rpc GetAllBotPricings (GetAllBotPricingsRequest) returns (stream ItemPricing); 
+}
+
+message ItemRequest {
+  string name = 1;
+}
+
+message Tf2Currency {
+  double keys = 1;
+  double metal = 2;
+}
+
+message ItemQuality {
+  uint32 id = 1;
+  string name = 2;
+  string color = 3;
+}
+
+message TradeItemDetails {
+  string name = 1;
+  string image_url = 2;
+  ItemQuality quality = 3;
+}
+
+message TradeUserDetails {
+  string name = 1;
+  string avatar_thumbnail_url = 2;
+  bool online = 3;
+  string steam_id = 4;
+}
+
+message TradeDetails {
+  string listing_id = 1;
+  google.protobuf.StringValue trade_offer_url = 2;
+  string description = 3;
+  TradeItemDetails item = 4;
+  TradeUserDetails user = 5;
+}
+
+message ListingDetails {
+  // the original currencies specified in the listing
+  Tf2Currency price = 1;
+  TradeDetails trade_details = 2;
+  google.protobuf.Timestamp bumped_at = 3;
+  double price_keys = 4;
+  double price_metal = 5;
+}
+
+message ItemPricing {
+  string name = 1;
+  optional ListingDetails buy = 2;
+  optional ListingDetails sell = 3;
+  google.protobuf.Timestamp updated_at = 4;
+  repeated ListingDetails buy_listings = 5;
+  repeated ListingDetails sell_listings = 6;
+}
+
+enum KeyExchangeSource {
+  LISTINGS = 0;
+  SNAPSHOT = 1;
+}
+
+message KeyExchangeRateResponse {
+  double metal = 1;
+  google.protobuf.Timestamp updated_at = 2;
+  KeyExchangeSource source = 3;
+}
+
+message GetAllBotPricingsRequest {
+  optional google.protobuf.Duration stale_limit = 1;
+}
+
+message DeleteBotPricingRequest {
+  string name = 1;
+}
+
+message DeleteBotPricingResponse {
+}

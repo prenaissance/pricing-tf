@@ -1,0 +1,28 @@
+syntax = "proto3";
+
+package pricing_tf.blocked_users.v1;
+
+// Manage blocked users
+service BlockUserService {
+  // Block user by their steam id. Their current and future trade listings will be removed
+  rpc BlockUser (BlockUserRequest) returns (BlockUserResponse);
+  // Reverts the BlockUser RPC. Idempotent.
+  rpc UnblockUser (UnblockUserRequest) returns (UnblockUserResponse);
+}
+
+message BlockUserRequest {
+  string steam_id = 1;
+}
+
+message BlockUserResponse {
+  bool success = 1;
+  uint32 deleted_listing_count = 2;
+}
+
+message UnblockUserRequest {
+  string steam_id = 1;
+}
+
+message UnblockUserResponse {
+  bool success = 1;
+}

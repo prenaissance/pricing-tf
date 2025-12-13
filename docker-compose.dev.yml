@@ -1,4 +1,4 @@
 services:
-  mongo:
+  postgres:
     ports:
-      - "27117:27117"
+      - 5432:5432
