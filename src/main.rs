@@ -57,6 +57,8 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         .register_encoded_file_descriptor_set(FILE_DESCRIPTOR_SET)
         .build_v1()?;
 
+    let (_, health_service) = tonic_health::server::health_reporter();
+
     let grpc_server_handler = tonic::transport::Server::builder()
         .add_service(PricingServiceServer::new(PricingService::new(
             pool.clone(),
@@ -67,6 +69,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
             blocked_user_steam_ids.clone(),
         )))
         .add_service(reflection_service)
+        .add_service(health_service)
         .serve(addr);
 
     let exchange_rate_polling_handler =
