@@ -1,0 +1,22 @@
+FROM rust:1.92.0-alpine AS builder
+WORKDIR /app
+RUN apk update && apk add --no-cache protobuf-dev postgresql-dev
+
+COPY Cargo.toml Cargo.lock build.rs ./
+COPY ./protos/ ./protos/
+# Simulate src folder to install dependencies & run build script
+RUN mkdir src && echo "fn main() {}" > src/main.rs && cargo build --release && rm -rf src
+
+COPY src ./src
+RUN cargo build --release
+RUN strip ./target/release/pricing-tf
+
+# FROM debian:trixie-slim
+FROM alpine:latest
+WORKDIR /app
+
+ENV PORT=80
+EXPOSE 80
+
+COPY --from=builder /app/target/release/pricing-tf ./pricing-tf
+ENTRYPOINT ["./pricing-tf"]

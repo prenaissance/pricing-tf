@@ -15,7 +15,7 @@ const FILE_DESCRIPTOR_SET: &[u8] = tonic::include_file_descriptor_set!("pricing_
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
-    dotenvy::dotenv()?;
+    dotenvy::dotenv().ok();
     let app_config = AppConfig::from_env();
     tracing_subscriber::fmt()
         .with_env_filter(EnvFilter::from_default_env())

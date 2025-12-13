@@ -1,32 +1,9 @@
 services:
-  mongo:
-    ports:
-      - 27117:27017
-
-  processing:
-    build:
-      context: .
-      dockerfile: src/processing/Dockerfile
+  pricing-tf:
+    build: .
     depends_on:
-      mongo:
-        condition: service_started
+      postgres:
+        condition: service_healthy
+    env_file: .env
     environment:
-      - MongoDbUrl=mongodb://mongo:27017
-      - MongoDbName=backpack-tf-replica
-      - BackpackTfCookie=${BackpackTfCookie} # Your backpack.tf cookie
-
-  webapi:
-    build:
-      context: .
-      dockerfile: src/webapi/Dockerfile
-    ports:
-      - 8080:8080
-    depends_on:
-      mongo:
-        condition: service_started
-      processing:
-        condition: service_started
-    environment:
-      - MongoDbUrl=mongodb://mongo:27017
-      - MongoDbName=backpack-tf-replica
-      - BackpackTfCookie=${BackpackTfCookie} # Your backpack.tf cookie
+      - DATABASE_URL=postgres://postgres:example@postgres:5432/pricing_tf

@@ -1,16 +1,18 @@
+name: Build and Publish Docker Image
+
 on:
   release:
     types: [published]
 
 env:
-  IMAGE_NAME: prenaissance/pricing-tf-processing
-  TARGET_PLAFORMS: linux/amd64,linux/arm64
+  IMAGE_NAME: prenaissance/pricing-tf
+  TARGET_PLATFORMS: linux/amd64,linux/arm64
 
 jobs:
   build:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
       - name: Get the version
         id: get_version
         run: |
@@ -30,9 +32,9 @@ jobs:
         uses: docker/build-push-action@v6
         with:
           context: .
-          file: ./src/processing/Dockerfile
+          file: ./Dockerfile
           push: true
-          platforms: ${{ env.TARGET_PLAFORMS }}
+          platforms: ${{ env.TARGET_PLATFORMS }}
           tags: |
             ${{ env.IMAGE_NAME }}:${{ steps.get_version.outputs.VERSION }}
             ${{ env.IMAGE_NAME }}:${{ steps.get_version.outputs.MAJOR_MINOR_VERSION }}

@@ -1,0 +1,47 @@
+name: CI
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  checks:
+    name: Rust Linting and Format Checks
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+      - name: Install System Dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y protobuf-compiler
+      - uses: actions-rust-lang/setup-rust-toolchain@v1
+        with:
+          toolchain: stable
+          components: clippy, rustfmt
+      - name: Setup Rust Cache
+        uses: Swatinem/rust-cache@v2
+      - name: Format Check
+        run: cargo fmt -- --check
+        working-directory: ./src-tauri
+      - name: Lint Check
+        run: cargo clippy
+        working-directory: ./src-tauri
+
+  tests:
+    name: Rust Tests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+      # Copy pasted from above due to nektos/act limitations at the moment
+      - name: Install System Dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y protobuf-compiler
+      - uses: actions-rust-lang/setup-rust-toolchain@v1
+        with:
+          toolchain: stable
+      - name: Setup Rust Cache
+        uses: Swatinem/rust-cache@v2
+
+      - name: Unit Tests
+        run: cargo test
