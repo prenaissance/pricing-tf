@@ -28,13 +28,14 @@ impl From<reqwest::Error> for BackpackTfApiError {
     }
 }
 
-#[derive(Deserialize)]
+#[derive(Debug, Deserialize)]
 pub struct SnapshotResponse {
+    /// Listings come sorted by price, first all lowest sell listings, then highest buy listings
     pub listings: Vec<SnapshotListing>,
 }
 
 /// More fields are present in the response, add if needed
-#[derive(Deserialize)]
+#[derive(Debug, Deserialize)]
 pub struct SnapshotListing {
     pub steamid: String,
     /// full metal conversion

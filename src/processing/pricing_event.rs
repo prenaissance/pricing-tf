@@ -57,6 +57,7 @@ pub struct ItemListing {
     pub appid: u32,
     pub base_name: String,
     pub defindex: Option<u32>,
+    /// item id from Steam. Empty string for buy listings
     pub id: String,
     pub image_url: String,
     pub market_name: String,

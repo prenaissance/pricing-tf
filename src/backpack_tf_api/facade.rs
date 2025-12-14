@@ -1,3 +1,5 @@
+use std::collections::HashMap;
+
 use crate::backpack_tf_api::payloads::{BackpackTfApiError, SnapshotResponse};
 use crate::models::trade_listing::ListingIntent;
 
@@ -33,28 +35,30 @@ impl BackpackTfApi {
             .json()
             .await?;
 
-        let mut sell_listings_iter = response
+        let first_price = response
             .listings
-            .iter()
-            .filter(|listing| listing.intent == ListingIntent::Sell);
-
-        let mut price_mode = sell_listings_iter
-            .next()
+            .first()
             .ok_or(BackpackTfApiError::NoSellListings)?
             .price;
-        let mut current_diff = 1;
 
-        for listing in sell_listings_iter {
-            if listing.price == price_mode {
-                current_diff += 1;
-            } else if current_diff == 0 {
-                price_mode = listing.price;
-                current_diff = 1;
-            } else {
-                current_diff -= 1;
+        let sell_listings = response
+            .listings
+            .into_iter()
+            .filter(|listing| listing.intent == ListingIntent::Sell);
+
+        let mut counter = HashMap::<u16, u8>::new();
+        for listing in sell_listings {
+            // convert to metal "cents" to avoid floating point precision issues
+            // e.g. 65.33 metal -> 6533
+            let price = (listing.price * 100.0).round() as u16;
+            let entry = counter.entry(price).or_insert(0);
+            *entry += 1;
+            if *entry >= 3 {
+                return Ok(listing.price);
             }
         }
 
-        Ok(price_mode)
+        // fallback simply the lowest sell price
+        Ok(first_price)
     }
 }
