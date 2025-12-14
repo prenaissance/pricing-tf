@@ -94,6 +94,7 @@ impl PricingEvent {
 
             trade_details_trade_offer_url: self.payload.user.trade_offer_url.unwrap_or_default(),
             trade_details_description: self.payload.details,
+            trade_item_details_id: self.payload.item.id,
             trade_item_details_image_url: self.payload.item.image_url,
 
             item_quality_id: self.payload.item.quality.id as i32,

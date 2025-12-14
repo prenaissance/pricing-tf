@@ -14,6 +14,7 @@ pub struct ItemQuality {
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct TradeItemDetails {
+    pub id: String,
     pub image_url: String,
     pub quality: ItemQuality,
 }
@@ -76,6 +77,7 @@ pub struct TradeListingRow {
     pub trade_details_trade_offer_url: String,
     pub trade_details_description: String,
 
+    pub trade_item_details_id: String,
     pub trade_item_details_image_url: String,
 
     pub item_quality_id: i32,
@@ -98,6 +100,7 @@ impl From<TradeListingRow> for TradeListing {
         };
 
         let trade_item_details = TradeItemDetails {
+            id: row.trade_item_details_id,
             image_url: row.trade_item_details_image_url,
             quality: item_quality,
         };
@@ -133,6 +136,7 @@ impl From<TradeListingRow> for TradeListing {
 
 #[derive(Insertable)]
 #[diesel(table_name = crate::schema::trade_listings)]
+#[diesel(check_for_backend(diesel::pg::Pg))]
 pub struct NewTradeListing {
     pub id: String,
     pub item_name: String,
@@ -148,6 +152,7 @@ pub struct NewTradeListing {
     pub trade_details_trade_offer_url: String,
     pub trade_details_description: String,
 
+    pub trade_item_details_id: String,
     pub trade_item_details_image_url: String,
 
     pub item_quality_id: i32,
@@ -177,6 +182,7 @@ impl From<TradeListing> for NewTradeListing {
 
             trade_details_trade_offer_url: model.trade_details.trade_offer_url,
             trade_details_description: model.trade_details.description,
+            trade_item_details_id: model.trade_details.item.id,
             trade_item_details_image_url: model.trade_details.item.image_url,
 
             item_quality_id: model.trade_details.item.quality.id as i32,
