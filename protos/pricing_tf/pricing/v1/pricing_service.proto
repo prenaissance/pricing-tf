@@ -37,6 +37,8 @@ message ItemQuality {
 }
 
 message TradeItemDetails {
+  // item id from Steam. Empty string for buy listings
+  string id = 4;
   string name = 1;
   string image_url = 2;
   ItemQuality quality = 3;

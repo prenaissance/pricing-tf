@@ -38,6 +38,7 @@ diesel::table! {
         trade_user_details_avatar_thumbnail_url -> Text,
         trade_user_details_online -> Bool,
         trade_user_details_steam_id -> Text,
+        trade_item_details_id -> Text,
     }
 }
 
