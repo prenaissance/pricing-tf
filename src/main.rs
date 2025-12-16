@@ -94,7 +94,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
             tracing::error!("gRPC server handler exited unexpectedly: {:?}", res);
         }
         res = ws_processing_handle => {
-            tracing::error!("WebSocket processing handler exited unexpectedly: {:?}", res);
+            tracing::error!("WS processing handler exited unexpectedly: {:?}", res);
         }
         res = materialized_views_handle => {
             tracing::error!("Materialized views worker exited unexpectedly: {:?}", res);
