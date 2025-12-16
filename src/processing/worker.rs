@@ -12,7 +12,14 @@ use super::pricing_event::{ListingType, PricingEvent};
 
 const WS_URL: &str = "wss://ws.backpack.tf/events";
 const PROCESSED_STATISTICS_INTERVAL_MINS: i64 = 5;
+const INITIAL_BACKOFF_SECS: u64 = 5;
 const MAX_BACKOFF_SECS: u64 = 300;
+const FUTURE_TIMEOUT: std::time::Duration = std::time::Duration::from_secs(10);
+
+async fn wait_exponential_backoff(backoff: &mut u64) {
+    tokio::time::sleep(std::time::Duration::from_secs(*backoff)).await;
+    *backoff = std::cmp::min(*backoff * 2, MAX_BACKOFF_SECS);
+}
 
 pub async fn run(
     pool: AsyncDbPool,
@@ -21,145 +28,49 @@ pub async fn run(
 ) -> () {
     let mut processed_events_counter = 0;
     let mut last_statistics_log: Option<chrono::DateTime<chrono::Utc>> = None;
-    let mut backoff = 5;
+    let mut backoff = INITIAL_BACKOFF_SECS;
+
     loop {
-        let (ws_stream, _response) = match tokio_tungstenite::connect_async(WS_URL).await {
-            Ok(res) => res,
-            Err(e) => {
-                tracing::error!(
-                    "Failed to connect to WS server: {}. Retrying in {} seconds...",
-                    e,
-                    backoff
-                );
-                tokio::time::sleep(std::time::Duration::from_secs(backoff)).await;
-                backoff = std::cmp::min(backoff * 2, MAX_BACKOFF_SECS);
-                continue;
-            }
-        };
+        let (ws_stream, _response) =
+            match tokio::time::timeout(FUTURE_TIMEOUT, tokio_tungstenite::connect_async(WS_URL))
+                .await
+            {
+                Ok(ws_result) => match ws_result {
+                    Ok(res) => {
+                        backoff = INITIAL_BACKOFF_SECS;
+                        res
+                    }
+                    Err(e) => {
+                        tracing::error!(
+                            "Failed to connect to WS server: {}. Retrying in {} seconds...",
+                            e,
+                            backoff
+                        );
+                        wait_exponential_backoff(&mut backoff).await;
+                        continue;
+                    }
+                },
+                Err(_) => {
+                    tracing::error!(
+                        "Timeout while trying to connect to WS server. Retrying in {} seconds...",
+                        backoff
+                    );
+                    wait_exponential_backoff(&mut backoff).await;
+                    continue;
+                }
+            };
         tracing::info!("Connected to WS server");
 
         let (_, mut read) = ws_stream.split();
-        while let Some(Ok(msg)) = read.next().await {
+        while let Ok(Some(Ok(msg))) = tokio::time::timeout(FUTURE_TIMEOUT, read.next()).await {
+            let text;
             match msg {
-                Message::Text(text) => {
-                    let events: Vec<PricingEvent> = match serde_json::from_str(&text) {
-                        Ok(ev) => ev,
-                        Err(e) => {
-                            let file_name = format!(
-                                "failed_ws_message_{}.json",
-                                chrono::Utc::now().timestamp_millis()
-                            );
-                            if let Err(err) = tokio::fs::create_dir_all("/tmp/pricing_tf").await {
-                                tracing::error!(
-                                    "Failed to create /tmp/pricing_tf directory to report deserialization errors. Continuing execution. Error: {}",
-                                    err
-                                );
-                                continue;
-                            }
-
-                            if let Err(err) = tokio::fs::write(
-                                format!("/tmp/pricing_tf/{}", file_name),
-                                text.as_bytes(),
-                            )
-                            .await
-                            {
-                                tracing::error!(
-                                    "Failed to write failed WS message to /tmp/pricing_tf/{}. Continuing execution. Error: {}",
-                                    file_name,
-                                    err
-                                );
-                                continue;
-                            }
-
-                            tracing::error!(
-                                "Failed to deserialize message: {}\nJSON stored in /tmp/pricing_tf/{}",
-                                e,
-                                file_name
-                            );
-
-                            continue;
-                        }
-                    };
-                    let steam_ids = blocked_user_steam_ids.lock().await;
-                    let (upserts, deletes) = events
-                        .into_iter()
-                        // How does this even happen?
-                        .filter(|event| !event.payload.item.name.is_empty())
-                        .filter(|event| !steam_ids.contains(&event.payload.steamid))
-                        .filter(|event| !etl::is_spelled_item(event))
-                        .filter(|event| !etl::is_unusual_weapon(event))
-                        .partition::<Vec<_>, _>(|event| event.event == ListingType::ListingUpdate);
-
-                    let upserts = etl::filter_unique_listing_events(upserts);
-
-                    let upserts_len = upserts.len();
-                    let deletes_len = deletes.len();
-
-                    let mut connection = match pool.get().await {
-                        Ok(conn) => conn,
-                        Err(e) => {
-                            tracing::error!(
-                                "Failed to get DB connection from pool: {}. Skipping this batch of events.",
-                                e
-                            );
-                            continue;
-                        }
-                    };
-
-                    if !upserts.is_empty() {
-                        let exchange_rate = cached_exchange_rate.lock().await.rate;
-
-                        let new_listings: Vec<_> = upserts
-                            .into_iter()
-                            .map(|event| event.to_trade_listing(exchange_rate))
-                            .collect();
-
-                        if let Err(e) =
-                            etl::upsert_trade_listings(&mut connection, new_listings).await
-                        {
-                            tracing::error!(
-                                "Failed to upsert trade listings into DB: {}. Skipping this batch of events.",
-                                e
-                            );
-                            continue;
-                        }
-                    }
-                    if !deletes.is_empty() {
-                        let ids_to_delete: Vec<String> =
-                            deletes.into_iter().map(|event| event.payload.id).collect();
-
-                        if let Err(e) =
-                            etl::delete_trade_listings(&mut connection, ids_to_delete).await
-                        {
-                            tracing::error!(
-                                "Failed to delete trade listings from DB: {}. Skipping this batch of events.",
-                                e
-                            );
-                            continue;
-                        };
-                    }
-
-                    tracing::debug!(
-                        "Successfully processed an event batch of {} upserts and {} deletes",
-                        upserts_len,
-                        deletes_len
-                    );
-
-                    processed_events_counter += (upserts_len + deletes_len) as i64;
-                    let now = chrono::Utc::now();
-                    if last_statistics_log.is_none_or(|last_statistics_log| {
-                        now.signed_duration_since(last_statistics_log).num_minutes()
-                            >= PROCESSED_STATISTICS_INTERVAL_MINS
-                    }) {
-                        tracing::info!(
-                            "Processed {} events since the start of the program",
-                            processed_events_counter
-                        );
-                        last_statistics_log = Some(now);
-                    }
+                Message::Text(msg_text) => {
+                    text = msg_text;
                 }
                 Message::Close(_) => {
                     tracing::warn!("WS Server closed connection.");
+                    break;
                 }
                 msg => {
                     if msg.is_empty() {
@@ -167,8 +78,125 @@ pub async fn run(
                         continue;
                     }
                     tracing::warn!("Unhandled message received: {}", msg);
+                    continue;
                 }
             }
+            backoff = INITIAL_BACKOFF_SECS;
+
+            let events: Vec<PricingEvent> = match serde_json::from_str(&text) {
+                Ok(ev) => ev,
+                Err(e) => {
+                    let file_name = format!(
+                        "failed_ws_message_{}.json",
+                        chrono::Utc::now().timestamp_millis()
+                    );
+                    if let Err(err) = tokio::fs::create_dir_all("/tmp/pricing_tf").await {
+                        tracing::error!(
+                            "Failed to create /tmp/pricing_tf directory to report deserialization errors. Continuing execution. Error: {}",
+                            err
+                        );
+                        continue;
+                    }
+
+                    if let Err(err) =
+                        tokio::fs::write(format!("/tmp/pricing_tf/{}", file_name), text.as_bytes())
+                            .await
+                    {
+                        tracing::error!(
+                            "Failed to write failed WS message to /tmp/pricing_tf/{}. Continuing execution. Error: {}",
+                            file_name,
+                            err
+                        );
+                        continue;
+                    }
+
+                    tracing::error!(
+                        "Failed to deserialize message: {}\nJSON stored in /tmp/pricing_tf/{}",
+                        e,
+                        file_name
+                    );
+
+                    continue;
+                }
+            };
+            let steam_ids = blocked_user_steam_ids.lock().await;
+            let (upserts, deletes) = events
+                .into_iter()
+                // How does this even happen?
+                .filter(|event| !event.payload.item.name.is_empty())
+                .filter(|event| !steam_ids.contains(&event.payload.steamid))
+                .filter(|event| !etl::is_spelled_item(event))
+                .filter(|event| !etl::is_unusual_weapon(event))
+                .partition::<Vec<_>, _>(|event| event.event == ListingType::ListingUpdate);
+
+            let upserts = etl::filter_unique_listing_events(upserts);
+
+            let upserts_len = upserts.len();
+            let deletes_len = deletes.len();
+
+            let mut connection = match pool.get().await {
+                Ok(conn) => conn,
+                Err(e) => {
+                    tracing::error!(
+                        "Failed to get DB connection from pool: {}. Skipping this batch of events.",
+                        e
+                    );
+                    continue;
+                }
+            };
+
+            if !upserts.is_empty() {
+                let exchange_rate = cached_exchange_rate.lock().await.rate;
+
+                let new_listings: Vec<_> = upserts
+                    .into_iter()
+                    .map(|event| event.to_trade_listing(exchange_rate))
+                    .collect();
+
+                if let Err(e) = etl::upsert_trade_listings(&mut connection, new_listings).await {
+                    tracing::error!(
+                        "Failed to upsert trade listings into DB: {}. Skipping this batch of events.",
+                        e
+                    );
+                    continue;
+                }
+            }
+            if !deletes.is_empty() {
+                let ids_to_delete: Vec<String> =
+                    deletes.into_iter().map(|event| event.payload.id).collect();
+
+                if let Err(e) = etl::delete_trade_listings(&mut connection, ids_to_delete).await {
+                    tracing::error!(
+                        "Failed to delete trade listings from DB: {}. Skipping this batch of events.",
+                        e
+                    );
+                    continue;
+                };
+            }
+
+            tracing::debug!(
+                "Successfully processed an event batch of {} upserts and {} deletes",
+                upserts_len,
+                deletes_len
+            );
+
+            processed_events_counter += (upserts_len + deletes_len) as i64;
+            let now = chrono::Utc::now();
+            if last_statistics_log.is_none_or(|last_statistics_log| {
+                now.signed_duration_since(last_statistics_log).num_minutes()
+                    >= PROCESSED_STATISTICS_INTERVAL_MINS
+            }) {
+                tracing::info!(
+                    "Processed {} events since the start of the program",
+                    processed_events_counter
+                );
+                last_statistics_log = Some(now);
+            }
         }
+        tracing::warn!(
+            "Disconnected from WS server due to closed connection or timeout. Reconnecting in {} seconds...",
+            backoff
+        );
+        wait_exponential_backoff(&mut backoff).await;
     }
 }
