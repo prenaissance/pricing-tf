@@ -63,11 +63,8 @@ pub async fn run(
 
         let (_, mut read) = ws_stream.split();
         while let Ok(Some(Ok(msg))) = tokio::time::timeout(FUTURE_TIMEOUT, read.next()).await {
-            let text;
-            match msg {
-                Message::Text(msg_text) => {
-                    text = msg_text;
-                }
+            let text = match msg {
+                Message::Text(text) => text,
                 Message::Close(_) => {
                     tracing::warn!("WS Server closed connection.");
                     break;
@@ -80,7 +77,7 @@ pub async fn run(
                     tracing::warn!("Unhandled message received: {}", msg);
                     continue;
                 }
-            }
+            };
             backoff = INITIAL_BACKOFF_SECS;
 
             let events: Vec<PricingEvent> = match serde_json::from_str(&text) {
